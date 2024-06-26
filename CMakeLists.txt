@@ -12,7 +12,8 @@ find_package(SQLite3 REQUIRED)
 include_directories(${NCURSESW_INCLUDE_DIR} ${SQLite3_INCLUDE_DIRS})
 
 # Add the main executable
-add_executable(mcal src/main.c src/DLL.c src/EntryMan.c src/SQL.c src/MenuMan.c)
+file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} "src/*.c")
+add_executable(mcal ${SOURCES})
 
 # Link libraries to the main executable
 target_link_libraries(mcal ${NCURSESW_LIBRARY} ${SQLite3_LIBRARIES})
