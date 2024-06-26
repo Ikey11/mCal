@@ -3,7 +3,7 @@
 
 int main()
 {
-    WINDOW *menu_win, *focus_win, *console_win;
+    WINDOW *menu_win, *focus_win;
     int highlight = 1; // Selected entry
 
     // ----- Init Window -----
@@ -13,6 +13,7 @@ int main()
     start_color();
 
     // Initialize color pairs for priorities
+    init_pair(0, COLOR_WHITE, COLOR_BLACK);
     init_pair(1, COLOR_RED, COLOR_BLACK);
     init_pair(2, COLOR_GREEN, COLOR_BLACK);
     init_pair(3, COLOR_YELLOW, COLOR_BLACK);
@@ -24,9 +25,15 @@ int main()
     noecho();
     cbreak(); // Line buffering disabled. pass on everything
 
-    focus_win = newwin(7, 100, 1, 1);
+    focus_win = newwin(8, 100, 1, 1);
     menu_win = newwin(30, 100, 9, 1);
-    console_win = newwin(10, 100, 40, 1);
+
+    console_win = newwin(10, 100, 39, 1);
+    console_enabled = true; // Enables console logging
+    wattron(console_win, COLOR_PAIR(1));
+    //box(console_win, 0, 0);
+    wattroff(console_win, COLOR_PAIR(1));
+
     keypad(menu_win, TRUE); // Enables arrow keys
     ScreenState current_screen = TASK_SCREEN;
 
@@ -36,19 +43,25 @@ int main()
     sqlite3 *db;
     InitSQL(&db);
 
+    LOG_INFO("Finished creating database");
+
     // Init list
     DoublyLinkedList *list = create_list();
     size_t *n_tasks = &list->size;
     EatSQL(list, db);
 
+    LOG_INFO("Finished creating DLL");
+
     // ----- Output to terminal -----
+
+    LOG_WARNING("this is a test.");
+    LOG_ERROR("this is a test.");
 
     while (1)
     {
         // Clear the windows
         wclear(focus_win);
         wclear(menu_win);
-        wclear(console_win);
 
         // Outline windows
         wattron(focus_win, COLOR_PAIR(6));
@@ -57,14 +70,9 @@ int main()
 
         box(menu_win, 0, 0);
 
-        wattron(console_win, COLOR_PAIR(1));
-        box(console_win, 0, 0);
-        wattroff(console_win, COLOR_PAIR(1));
-
         // Refresh windows
         wrefresh(focus_win);
         wrefresh(menu_win);
-        wrefresh(console_win);
 
         // Menu window state machine
         switch (current_screen)
@@ -78,7 +86,7 @@ int main()
         }
     }
 
-    wprintw(console_win, "Exiting...");
+    LOG_INFO("Exiting...");
     clrtoeol();
     refresh();
     getch();
