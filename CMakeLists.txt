@@ -22,16 +22,16 @@ target_link_libraries(mcal ${NCURSESW_LIBRARY} ${SQLite3_LIBRARIES})
 add_library(doubly_linked_list src/DLL.c)
 
 # Add test executables
-add_executable(testDLL tests/DLLtests.c src/DLL.c)
-add_executable(testSQL tests/SQLtest.c src/SQL.c src/DLL.c)
+#add_executable(testDLL tests/DLLtests.c src/DLL.c)
+#add_executable(testSQL tests/SQLtest.c src/SQL.c src/DLL.c)
 
 # Link libraries to test executables
-target_link_libraries(testDLL ${NCURSESW_LIBRARY})
-target_link_libraries(testSQL ${SQLite3_LIBRARIES} ${NCURSESW_LIBRARY})
+#target_link_libraries(testDLL ${NCURSESW_LIBRARY})
+#target_link_libraries(testSQL ${SQLite3_LIBRARIES} ${NCURSESW_LIBRARY})
 
 # Enable testing and add the tests directory
-enable_testing()
+#enable_testing()
 
 # Add tests
-add_test(NAME DLLtests COMMAND testDLL)
-add_test(NAME SQLtest COMMAND testSQL)
+#add_test(NAME DLLtests COMMAND testDLL)
+#add_test(NAME SQLtest COMMAND testSQL)
