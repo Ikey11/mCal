@@ -8,14 +8,16 @@
 
 typedef struct
 {
-    size_t id;
+    sqlite3_int64 id;
     time_t date;
     uint8_t priority; // Scale of 0-9
     uint8_t status;   // boolean
     char name[100];
+    char desc[256]; // Description
+    DoublyLinkedList subtask;
 } Task;
 
-Task *AddTask(DoublyLinkedList *list, time_t date, uint8_t priority, uint8_t status, const char *name);
+Task *AddTask(DoublyLinkedList *list, sqlite3_int64 id, const char *name, time_t date, uint8_t priority, uint8_t status, const char *description);
 
 void EatSQL(DoublyLinkedList *list, sqlite3 *db);
 

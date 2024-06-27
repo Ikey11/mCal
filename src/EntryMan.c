@@ -3,14 +3,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "Logger.h"
 #include "EntryMan.h"
 #include "SQL.h"
 
-// Frees data in entry
-void free_data(void *data)
-{
-    free(data);
-}
 
 /// @brief Adds a task to the program
 /// @param list List of tasks to append to
@@ -19,7 +15,7 @@ void free_data(void *data)
 /// @param status Whether the task is completed (0-1)
 /// @param name Name of task
 /// @return Added task or NULL on memory allocation failure
-Task *AddTask(DoublyLinkedList *list, time_t date, uint8_t priority, uint8_t status, const char *name)
+Task *AddTask(DoublyLinkedList *list, sqlite3_int64 id, const char *name, time_t date, uint8_t priority, uint8_t status, const char *description)
 {
     // Allocate memory for a new Task
     Task *task = (Task *)malloc(sizeof(Task));
@@ -28,15 +24,21 @@ Task *AddTask(DoublyLinkedList *list, time_t date, uint8_t priority, uint8_t sta
         return NULL;
     }
 
+    task->id = id;
     task->date = date;
     task->priority = priority;
     task->status = status;
-    strncpy(task->name, name, 100);
+    strncpy(task->name, name, 99);
     task->name[sizeof(task->name) - 1] = '\0'; // Ensure null termination
+    if (description)
+    {
+        strncpy(task->desc, description, 255);
+        task->desc[sizeof(task->desc) - 1] = '\0'; // Ensure null termination
+    }
 
     // Insert the new Task into the list
     insert_front(list, task);
-    printf("Added %s!\n", name);
+    LOG_INFO("EntryMan::AddTask: Added %s (%lld)", name, id);
 
     return task;
 }
@@ -48,18 +50,18 @@ void EatSQL(DoublyLinkedList *list, sqlite3 *db)
     int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
     if (rc != SQLITE_OK)
     {
-        fprintf(stderr, "Failed to fetch data: %s\n", sqlite3_errmsg(db));
+        LOG_ERROR("EntryMan::EatSQL: Failed to fetch data: %s", sqlite3_errmsg(db));
         return;
     }
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        int id = sqlite3_column_int(stmt, 0);
+        sqlite3_int64 id = sqlite3_column_int64(stmt, 0);
         const char *name = sqlite3_column_text(stmt, 1);
         const char *date_str = sqlite3_column_text(stmt, 2);
         const char *time_str = sqlite3_column_text(stmt, 3);
         int priority = sqlite3_column_int(stmt, 4);
-        //int completed = sqlite3_column_int(stmt, 5);
+        // int completed = sqlite3_column_int(stmt, 5);
         uint8_t completed = sqlite3_column_int(stmt, 5);
         const unsigned char *description = sqlite3_column_text(stmt, 6);
 
@@ -71,7 +73,7 @@ void EatSQL(DoublyLinkedList *list, sqlite3 *db)
         strptime(datetime_str, "%Y-%m-%d %H:%M", &tm);
         time_t date = mktime(&tm);
 
-        AddTask(list, date, priority, completed, name);
+        AddTask(list, id, name, date, priority, completed, description);
     }
 
     sqlite3_finalize(stmt);
@@ -102,13 +104,17 @@ void SortList(DoublyLinkedList *list)
 void read_list(DoublyLinkedList *list)
 {
     if (!list)
+    {
+        LOG_ERROR("EntryMan::read_list: Invalid DoublyLinkedList!");
         return;
+    }
     Node *current = list->head;
+    LOG_INFO("EntryMan: Printing list:");
     while (current)
     {
         Task *data = current->data;
 
-        printf("%s", data->name);
+        LOG_INFO("  %s", data->name);
         current = current->next;
     }
     return;
