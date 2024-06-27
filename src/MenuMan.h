@@ -2,6 +2,7 @@
 #define MENUMAN_H
 
 #include "main.h"
+#include "SQL.h"
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]);
 
@@ -16,9 +17,6 @@ typedef enum
 } ScreenState;
 
 ScreenState AddTaskScreen(WINDOW *menu_win, DoublyLinkedList *list, sqlite3 *db);
-
-int PriorityColor(int priority);
-void PrintMenu(WINDOW *menu_win, DoublyLinkedList *list, int highlight);
-ScreenState TaskScreen(WINDOW *menu_win, DoublyLinkedList *list, int *highlight, size_t *n_tasks);
+ScreenState TaskScreen(WINDOW *menu_win, sqlite3 *db, DoublyLinkedList *list, Node *highlight, size_t *n_tasks);
 
 #endif

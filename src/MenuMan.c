@@ -1,4 +1,11 @@
 #include "MenuMan.h"
+#include <stdlib.h>
+
+// Free node data
+void free_data(void *data)
+{
+    free(data);
+}
 
 // ----- Add Task -----
 
@@ -37,8 +44,10 @@ ScreenState AddTaskScreen(WINDOW *menu_win, DoublyLinkedList *list, sqlite3 *db)
     date = mktime(&tm_info);
 
     // Add task
-    AddTask(list, date, priority, false, name);                    // Add task to memory
-    AddEntry(db, name, date_str, time_str, priority, false, NULL); // Add task to database
+    sqlite3_int64 id;                                                        // ID of new entry
+    AddEntry(db, &id, name, date_str, time_str, priority, false, NULL); // Add task to database
+    LOG_INFO("Adding entry %ld to memory...", id);
+    AddTask(list, id, name, date, priority, false, NULL);             // Add task to memory
 
     noecho();
     curs_set(0); // Hide cursor
@@ -82,18 +91,24 @@ int PriorityColor(int priority)
     return color;
 }
 
-void PrintMenu(WINDOW *menu_win, DoublyLinkedList *list, int highlight)
+void PrintMenu(WINDOW *menu_win, DoublyLinkedList *list, Node *highlight)
 {
+    if (!highlight)
+    {
+        LOG_INFO("Menu is empty");
+        return;
+    }
     int y, i;
     y = 2; // Start y position
 
     // Retrieve data
     Node *entry = list->head;
-    for (i = 0; i < list->size; ++i)
+    while (entry)
     {
         Task *data = entry->data;
+        Task *selectedData = highlight->data;
 
-        if (highlight == i + 1)
+        if (selectedData->id == data->id)
         {
             wattron(menu_win, A_REVERSE);
         }
@@ -102,7 +117,7 @@ void PrintMenu(WINDOW *menu_win, DoublyLinkedList *list, int highlight)
         mvwprintw(menu_win, y, 3, "%s", data->status ? FILLED_BOX : UNFILLED_BOX);
         mvwprintw(menu_win, y, 4, "]");
 
-        if (highlight == i + 1)
+        if (selectedData->id == data->id)
         {
             wattroff(menu_win, A_REVERSE);
         }
@@ -131,36 +146,65 @@ void PrintMenu(WINDOW *menu_win, DoublyLinkedList *list, int highlight)
     wrefresh(menu_win);
 }
 
-ScreenState TaskScreen(WINDOW *menu_win, DoublyLinkedList *list, int *highlight, size_t *n_tasks)
+ScreenState TaskScreen(WINDOW *menu_win, sqlite3 *db, DoublyLinkedList *list, Node *highlight, size_t *n_tasks)
 {
     int c;
-    PrintMenu(menu_win, list, *highlight);
+    PrintMenu(menu_win, list, highlight);
     while (1)
     {
         c = wgetch(menu_win);
+
         switch (c)
         {
         case KEY_UP:
-            if (*highlight == 1)
-                *highlight = *n_tasks;
+            if (highlight->prev == NULL)
+                highlight = list->tail;
             else
-                --(*highlight);
+                highlight = highlight->prev;
             break;
         case KEY_DOWN:
-            if (*highlight == *n_tasks)
-                *highlight = 1;
+            if (highlight->next == NULL)
+                highlight = list->head;
             else
-                ++(*highlight);
+                highlight = highlight->next;
             break;
         case 'a': // Add tasks
             return ADD_TASK_SCREEN;
             break;
+        case 27: // Esc key
+            LOG_INFO("Esc key pressed");
+            break;
         case 10: // Enter key
             // Toggle the status of the highlighted choice
-            // tasks[highlight - 1].status = !tasks[highlight - 1].status;
+            if (highlight)
+            {
+                Task *selected_data = highlight->data;
+                selected_data->status = !selected_data->status;
+                CompleteEntry(db, selected_data->id);
+            }
+            break;
+        case 'd': // Delete
+            if (highlight)
+            {
+                Task *selected_data = highlight->data;
+                LOG_INFO("Deleting %s...", selected_data->name);
+                RemoveEntry(db, selected_data->id);
+
+                Node *rm = highlight;
+                if (highlight->prev == NULL)
+                    highlight = list->tail;
+                else
+                    highlight = highlight->prev;
+                delete_node(list, rm, free_data);
+            }
+            else
+            {
+                LOG_WARNING("Cannot deleted entry: No object highlighted");
+            }
             break;
         }
-        PrintMenu(menu_win, list, *highlight);
+
+        PrintMenu(menu_win, list, highlight);
     }
     return TASK_SCREEN;
 }
