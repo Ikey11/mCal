@@ -16,7 +16,9 @@ typedef enum
     EXIT_APP
 } ScreenState;
 
+void FocusMenu(WINDOW *focus_win, Node *highlight);
+
 ScreenState AddTaskScreen(WINDOW *menu_win, DoublyLinkedList *list, sqlite3 *db);
-ScreenState TaskScreen(WINDOW *menu_win, sqlite3 *db, DoublyLinkedList *list, Node *highlight, size_t *n_tasks);
+ScreenState TaskScreen(WINDOW *menu_win, sqlite3 *db, DoublyLinkedList *list, Node **highlight, size_t *n_tasks);
 
 #endif

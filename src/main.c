@@ -52,10 +52,11 @@ int main()
     EatSQL(list, db);
     LOG_INFO("Grabbed %d tasks from SQL database!", *n_tasks);
 
-    Node *highlight = list->head;   // Currently selected node
+    Node *highlight = list->head; // Currently selected node
 
     // ----- Output to terminal -----
-    while (1)
+    bool running = true;
+    while (running)
     {
         // Clear the windows
         wclear(focus_win);
@@ -65,6 +66,7 @@ int main()
         wattron(focus_win, COLOR_PAIR(6));
         box(focus_win, 0, 0);
         wattroff(focus_win, COLOR_PAIR(6));
+        FocusMenu(focus_win, highlight);
 
         box(menu_win, 0, 0);
 
@@ -76,10 +78,13 @@ int main()
         switch (current_screen)
         {
         case TASK_SCREEN:
-            current_screen = TaskScreen(menu_win, db, list, highlight, n_tasks);
+            current_screen = TaskScreen(menu_win, db, list, &highlight, n_tasks);
             break;
         case ADD_TASK_SCREEN:
             current_screen = AddTaskScreen(menu_win, list, db);
+            break;
+        case EXIT_APP:
+            running = false;
             break;
         }
     }

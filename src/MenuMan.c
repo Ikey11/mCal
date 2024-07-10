@@ -44,10 +44,10 @@ ScreenState AddTaskScreen(WINDOW *menu_win, DoublyLinkedList *list, sqlite3 *db)
     date = mktime(&tm_info);
 
     // Add task
-    sqlite3_int64 id;                                                        // ID of new entry
+    sqlite3_int64 id;                                                   // ID of new entry
     AddEntry(db, &id, name, date_str, time_str, priority, false, NULL); // Add task to database
     LOG_INFO("Adding entry %ld to memory...", id);
-    AddTask(list, id, name, date, priority, false, NULL);             // Add task to memory
+    AddTask(list, id, name, date, priority, false, NULL); // Add task to memory
 
     noecho();
     curs_set(0); // Hide cursor
@@ -91,6 +91,13 @@ int PriorityColor(int priority)
     return color;
 }
 
+void FocusMenu(WINDOW *focus_win, Node *entry)
+{
+    Task *data = entry->data;
+
+    mvwprintw(focus_win, 1, 2, "%s", data->name);
+}
+
 void PrintMenu(WINDOW *menu_win, DoublyLinkedList *list, Node *highlight)
 {
     if (!highlight)
@@ -98,6 +105,7 @@ void PrintMenu(WINDOW *menu_win, DoublyLinkedList *list, Node *highlight)
         LOG_INFO("Menu is empty");
         return;
     }
+
     int y, i;
     y = 2; // Start y position
 
@@ -146,65 +154,61 @@ void PrintMenu(WINDOW *menu_win, DoublyLinkedList *list, Node *highlight)
     wrefresh(menu_win);
 }
 
-ScreenState TaskScreen(WINDOW *menu_win, sqlite3 *db, DoublyLinkedList *list, Node *highlight, size_t *n_tasks)
+ScreenState TaskScreen(WINDOW *menu_win, sqlite3 *db, DoublyLinkedList *list, Node **highlight, size_t *n_tasks)
 {
     int c;
-    PrintMenu(menu_win, list, highlight);
-    while (1)
+    PrintMenu(menu_win, list, *highlight);
+    c = wgetch(menu_win);
+
+    switch (c)
     {
-        c = wgetch(menu_win);
-
-        switch (c)
+    case KEY_UP:
+        if ((*highlight)->prev == NULL)
+            *highlight = list->tail;
+        else
+            *highlight = (*highlight)->prev;
+        break;
+    case KEY_DOWN:
+        if ((*highlight)->next == NULL)
+            *highlight = list->head;
+        else
+            *highlight = (*highlight)->next;
+        break;
+    case 'a': // Add tasks
+        return ADD_TASK_SCREEN;
+        break;
+    case 27: // Exit (Esc key)
+        return EXIT_APP;
+        break;
+    case 10: // Enter key
+        // Toggle the status of the highlighted choice
+        if (*highlight)
         {
-        case KEY_UP:
-            if (highlight->prev == NULL)
-                highlight = list->tail;
-            else
-                highlight = highlight->prev;
-            break;
-        case KEY_DOWN:
-            if (highlight->next == NULL)
-                highlight = list->head;
-            else
-                highlight = highlight->next;
-            break;
-        case 'a': // Add tasks
-            return ADD_TASK_SCREEN;
-            break;
-        case 27: // Esc key
-            LOG_INFO("Esc key pressed");
-            break;
-        case 10: // Enter key
-            // Toggle the status of the highlighted choice
-            if (highlight)
-            {
-                Task *selected_data = highlight->data;
-                selected_data->status = !selected_data->status;
-                CompleteEntry(db, selected_data->id);
-            }
-            break;
-        case 'd': // Delete
-            if (highlight)
-            {
-                Task *selected_data = highlight->data;
-                LOG_INFO("Deleting %s...", selected_data->name);
-                RemoveEntry(db, selected_data->id);
-
-                Node *rm = highlight;
-                if (highlight->prev == NULL)
-                    highlight = list->tail;
-                else
-                    highlight = highlight->prev;
-                delete_node(list, rm, free_data);
-            }
-            else
-            {
-                LOG_WARNING("Cannot deleted entry: No object highlighted");
-            }
-            break;
+            Task *selected_data = (*highlight)->data;
+            selected_data->status = !selected_data->status;
+            CompleteEntry(db, selected_data->id);
         }
+        break;
+    case 'd': // Delete
+        if (*highlight)
+        {
+            Task *selected_data = (*highlight)->data;
+            LOG_INFO("Deleting %s...", selected_data->name);
+            RemoveEntry(db, selected_data->id);
 
-        PrintMenu(menu_win, list, highlight);
+            Node *rm = *highlight;
+            if ((*highlight)->prev == NULL)
+                *highlight = list->tail;
+            else
+                *highlight = (*highlight)->prev;
+            delete_node(list, rm, free_data);
+        }
+        else
+        {
+            LOG_WARNING("Cannot delete entry: No object selected");
+        }
+        break;
     }
+    PrintMenu(menu_win, list, *highlight);
     return TASK_SCREEN;
 }
