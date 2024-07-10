@@ -79,11 +79,6 @@ void EatSQL(DoublyLinkedList *list, sqlite3 *db)
     sqlite3_finalize(stmt);
 }
 
-Task *CompleteTask(DoublyLinkedList *tasks, Task *task)
-{
-    return task;
-}
-
 /// @brief Sorts list from earliest to latest data via Bubble sort
 /// @param list The list to sort
 void SortList(DoublyLinkedList *list)

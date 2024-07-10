@@ -23,8 +23,6 @@ void EatSQL(DoublyLinkedList *list, sqlite3 *db);
 
 void RemoveTask(DoublyLinkedList *list, const char *name);
 
-Task *CompleteTask(DoublyLinkedList *list, Task *task);
-
 void SortList(DoublyLinkedList *list);
 
 #endif
