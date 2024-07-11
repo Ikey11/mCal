@@ -95,7 +95,23 @@ void FocusMenu(WINDOW *focus_win, Node *entry)
 {
     Task *data = entry->data;
 
-    mvwprintw(focus_win, 1, 2, "%s", data->name);
+    mvwprintw(focus_win, 1, 2, "**%s**", data->name);
+
+    // Convert timestamp to human-readable date
+    char date_str[30]; // Buffer for the date string
+    struct tm *tm_info;
+    tm_info = localtime(&data->date);
+    strftime(date_str, 30, "%Y-%m-%d %H:%M", tm_info); // Format as YYYY-MM-DD HH:MM
+
+    mvwprintw(focus_win, 2, 4, "Due Date: %s", date_str);
+
+    int color = PriorityColor(data->priority);
+    mvwprintw(focus_win, 3, 4, "Priority: ");
+    wattron(focus_win, COLOR_PAIR(color));
+    mvwprintw(focus_win, 3, 14, "%u", data->priority);
+    wattroff(focus_win, COLOR_PAIR(color));
+
+    // Parse description (+ word wrap)
 }
 
 void PrintMenu(WINDOW *menu_win, DoublyLinkedList *list, Node *highlight)
