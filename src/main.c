@@ -24,14 +24,14 @@ int main()
     noecho();
     cbreak(); // Line buffering disabled. pass on everything
 
-    focus_win = newwin(8, 100, 1, 1);
-    menu_win = newwin(30, 100, 9, 1);
+    focus_win = newwin(FOCUS_LINES + 2, APP_WIDTH, 0, 0);
+    menu_win = newwin(MENU_LINES + 2, APP_WIDTH, FOCUS_LINES + 2, 0);
 
-    console_win = newwin(12, 100, 39, 1);
+    console_win = newwin(CONSOLE_LINES + 2, APP_WIDTH, FOCUS_LINES + MENU_LINES + 4, 0);
     console_enabled = true; // Enables console logging
-    wattron(console_win, COLOR_PAIR(1));
-    // box(console_win, 0, 0);
-    wattroff(console_win, COLOR_PAIR(1));
+
+    LOG_WARNING("This is a warning!");
+    LOG_ERROR("This is an error!");
 
     keypad(menu_win, TRUE); // Enables arrow keys
     ScreenState current_screen = TASK_SCREEN;

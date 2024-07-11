@@ -1,3 +1,4 @@
+// Essential tools for console output
 #ifndef MAIN_H
 #define MAIN_H
 

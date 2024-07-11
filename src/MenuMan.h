@@ -1,6 +1,7 @@
 #ifndef MENUMAN_H
 #define MENUMAN_H
 
+#include "defs.h"
 #include "main.h"
 #include "SQL.h"
 

@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <time.h>
+#include "defs.h"
 #include "DLL.h"
 #include "SQL.h"
 
@@ -12,8 +13,8 @@ typedef struct
     time_t date;
     uint8_t priority; // Scale of 0-9
     uint8_t status;   // boolean
-    char name[100];
-    char desc[256]; // Description
+    char name[APP_WIDTH];
+    char desc[DESC_SIZE]; // Description
     DoublyLinkedList subtask;
 } Task;
 

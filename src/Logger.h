@@ -5,10 +5,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdbool.h>
-
-// Define console sizes
-#define CONSOLE_LINES 10
-#define CONSOLE_WIDTH 100
+#include "defs.h"
 
 // Logging macros
 #define LOG_INFO(...) LogMessage(LOG_INFO, __VA_ARGS__)
