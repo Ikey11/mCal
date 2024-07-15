@@ -3,7 +3,8 @@
 
 int main()
 {
-    WINDOW *menu_win, *focus_win;
+    WINDOW *menu_win, *focus_win,
+        *menu_box, *focus_box, *console_box;
 
     // ----- Init Window -----
 
@@ -24,10 +25,13 @@ int main()
     noecho();
     cbreak(); // Line buffering disabled. pass on everything
 
-    focus_win = newwin(FOCUS_LINES + 2, APP_WIDTH, 0, 0);
-    menu_win = newwin(MENU_LINES + 2, APP_WIDTH, FOCUS_LINES + 2, 0);
+    focus_win = newwin(FOCUS_LINES, APP_WIDTH, 1, 1);
+    focus_box = newwin(FOCUS_LINES + 2, APP_WIDTH + 2, 0, 0);
+    menu_win = newwin(MENU_LINES, APP_WIDTH, FOCUS_LINES + 3, 1);
+    menu_box = newwin(MENU_LINES + 2, APP_WIDTH + 2, FOCUS_LINES + 2, 0);
 
-    console_win = newwin(CONSOLE_LINES + 2, APP_WIDTH, FOCUS_LINES + MENU_LINES + 4, 0);
+    console_win = newwin(CONSOLE_LINES, APP_WIDTH, FOCUS_LINES + MENU_LINES + 5, 1);
+    console_box = newwin(CONSOLE_LINES + 2, APP_WIDTH + 2, FOCUS_LINES + MENU_LINES + 4, 0);
     console_enabled = true; // Enables console logging
 
     LOG_WARNING("This is a warning!");
@@ -56,19 +60,32 @@ int main()
 
     // ----- Output to terminal -----
     bool running = true;
+
+    // Draw boxes
+    wattron(focus_box, COLOR_PAIR(6));
+    box(focus_box, 0, 0);
+    wattroff(focus_box, COLOR_PAIR(6));
+    wrefresh(focus_box);
+
+    box(menu_box, 0, 0);
+    wrefresh(menu_box);
+
+    if (console_enabled)
+    {
+        wattron(console_box, COLOR_PAIR(1));
+        box(console_box, 0, 0);
+        wattroff(console_box, COLOR_PAIR(1));
+        wrefresh(console_box);
+        LOG_INFO("Boxes drawn");    // Important to use or console will not display immediantly on boot
+    }
+
     while (running)
     {
         // Clear the windows
         wclear(focus_win);
         wclear(menu_win);
 
-        // Outline windows
-        wattron(focus_win, COLOR_PAIR(6));
-        box(focus_win, 0, 0);
-        wattroff(focus_win, COLOR_PAIR(6));
         FocusMenu(focus_win, highlight);
-
-        box(menu_win, 0, 0);
 
         // Refresh windows
         wrefresh(focus_win);

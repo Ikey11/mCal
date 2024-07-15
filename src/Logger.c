@@ -41,9 +41,6 @@ void LogMessage(LogLevel level, const char *format, ...)
 
     // Clear the console window and draw the box
     wclear(console_win);
-    wattron(console_win, COLOR_PAIR(1));
-    box(console_win, 0, 0);
-    wattroff(console_win, COLOR_PAIR(1));
 
     // Display the log messages from the circular buffer
     for (int i = 0; i < CONSOLE_LINES; i++)
@@ -51,9 +48,8 @@ void LogMessage(LogLevel level, const char *format, ...)
         int line_index = (current_line + i) % CONSOLE_LINES;
         if (strlen(log_buffer[line_index]) > 0)
         {
-
             wattron(console_win, COLOR_PAIR((int)log_buffer_level[line_index]));
-            mvwprintw(console_win, i + 1, 1, "%s", log_buffer[line_index]);
+            mvwprintw(console_win, i, 0, "%s", log_buffer[line_index]);
             wattroff(console_win, COLOR_PAIR((int)log_buffer_level[line_index]));
         }
     }

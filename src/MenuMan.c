@@ -95,7 +95,9 @@ void FocusMenu(WINDOW *focus_win, Node *entry)
 {
     Task *data = entry->data;
 
-    mvwprintw(focus_win, 1, 2, "**%s**", data->name);
+    wattron(focus_win, COLOR_PAIR(5));
+    mvwprintw(focus_win, 0, 1, "%s", data->name);
+    wattroff(focus_win, COLOR_PAIR(5));
 
     // Convert timestamp to human-readable date
     char date_str[30]; // Buffer for the date string
@@ -103,15 +105,27 @@ void FocusMenu(WINDOW *focus_win, Node *entry)
     tm_info = localtime(&data->date);
     strftime(date_str, 30, "%Y-%m-%d %H:%M", tm_info); // Format as YYYY-MM-DD HH:MM
 
-    mvwprintw(focus_win, 2, 4, "Due Date: %s", date_str);
+    mvwprintw(focus_win, 1, 4, "Due Date: %s", date_str);
 
     int color = PriorityColor(data->priority);
-    mvwprintw(focus_win, 3, 4, "Priority: ");
+    mvwprintw(focus_win, 2, 4, "Priority: ");
     wattron(focus_win, COLOR_PAIR(color));
-    mvwprintw(focus_win, 3, 14, "%u", data->priority);
+    mvwprintw(focus_win, 2, 14, "%u", data->priority);
     wattroff(focus_win, COLOR_PAIR(color));
 
     // Parse description (+ word wrap)
+    if (data->desc == NULL)
+        return;
+    
+    wmove(focus_win, 4, 1);
+    for (size_t i = 0; i < DESC_SIZE; i++)
+    {
+        char c = data->desc[i];
+        if (c == '\0')
+            break;
+
+        waddch(focus_win, c);
+    }
 }
 
 void PrintMenu(WINDOW *menu_win, DoublyLinkedList *list, Node *highlight)
@@ -123,7 +137,7 @@ void PrintMenu(WINDOW *menu_win, DoublyLinkedList *list, Node *highlight)
     }
 
     int y, i;
-    y = 2; // Start y position
+    y = 1; // Start y position
 
     // Retrieve data
     Node *entry = list->head;
