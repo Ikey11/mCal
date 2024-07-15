@@ -32,8 +32,12 @@ Task *AddTask(DoublyLinkedList *list, sqlite3_int64 id, const char *name, time_t
     task->name[sizeof(task->name) - 1] = '\0'; // Ensure null termination
     if (description)
     {
-        strncpy(task->desc, description, 255);
+        strncpy(task->desc, description, DESC_SIZE);
         task->desc[sizeof(task->desc) - 1] = '\0'; // Ensure null termination
+    }
+    else
+    {
+        task->desc[0] = '\0';
     }
 
     // Insert the new Task into the list
