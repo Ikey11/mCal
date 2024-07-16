@@ -24,7 +24,7 @@ ScreenState AddTaskScreen(WINDOW *menu_win, DoublyLinkedList *list, sqlite3 *db)
     // Get task data from user
     mvwprintw(menu_win, 2, 2, "Enter task name: ");
     wrefresh(menu_win);
-    wgetnstr(menu_win, name, 100);
+    wgetnstr(menu_win, name, NAME_SIZE);
 
     mvwprintw(menu_win, 3, 2, "Enter task date (YYYY-MM-DD): ");
     wrefresh(menu_win);
@@ -95,9 +95,10 @@ void FocusMenu(WINDOW *focus_win, Node *entry)
 {
     Task *data = entry->data;
 
-    wattron(focus_win, COLOR_PAIR(5));
-    mvwprintw(focus_win, 0, 1, "%s", data->name);
-    wattroff(focus_win, COLOR_PAIR(5));
+    int color = PriorityColor(data->priority);
+    wattron(focus_win, COLOR_PAIR(color));
+    mvwprintw(focus_win, 0, 0, "%s", data->name);
+    wattroff(focus_win, COLOR_PAIR(color));
 
     // Convert timestamp to human-readable date
     char date_str[30]; // Buffer for the date string
@@ -105,18 +106,17 @@ void FocusMenu(WINDOW *focus_win, Node *entry)
     tm_info = localtime(&data->date);
     strftime(date_str, 30, "%Y-%m-%d %H:%M", tm_info); // Format as YYYY-MM-DD HH:MM
 
-    mvwprintw(focus_win, 1, 4, "Due Date: %s", date_str);
+    mvwprintw(focus_win, 1, 0, "Due: %s", date_str);
 
-    int color = PriorityColor(data->priority);
-    mvwprintw(focus_win, 2, 4, "Priority: ");
+    mvwprintw(focus_win, 1, 24, "Prio:");
     wattron(focus_win, COLOR_PAIR(color));
-    mvwprintw(focus_win, 2, 14, "%u", data->priority);
+    mvwprintw(focus_win, 1, 29, "%u", data->priority);
     wattroff(focus_win, COLOR_PAIR(color));
 
     // Parse description (+ word wrap)
     if (data->desc == NULL)
         return;
-    
+
     wmove(focus_win, 4, 1);
     for (size_t i = 0; i < DESC_SIZE; i++)
     {
@@ -151,16 +151,20 @@ void PrintMenu(WINDOW *menu_win, DoublyLinkedList *list, Node *highlight)
             wattron(menu_win, A_REVERSE);
         }
 
-        mvwprintw(menu_win, y, 2, "[");
-        mvwprintw(menu_win, y, 3, "%s", data->status ? FILLED_BOX : UNFILLED_BOX);
-        mvwprintw(menu_win, y, 4, "]");
+        mvwprintw(menu_win, y, 1, "[");
+        mvwprintw(menu_win, y, 2, "%s", data->status ? FILLED_BOX : UNFILLED_BOX);
+        mvwprintw(menu_win, y, 3, "]");
 
         if (selectedData->id == data->id)
         {
             wattroff(menu_win, A_REVERSE);
         }
 
-        mvwprintw(menu_win, y, 6, "%s", data->name);
+        // Print name
+        int color = PriorityColor(data->priority);
+        wattron(menu_win, COLOR_PAIR(color));
+        mvwprintw(menu_win, y, 5, "%s", data->name);
+        wattroff(menu_win, COLOR_PAIR(color));
 
         // Convert timestamp to human-readable date
         char date_str[30]; // Buffer for the date string
@@ -168,13 +172,7 @@ void PrintMenu(WINDOW *menu_win, DoublyLinkedList *list, Node *highlight)
         tm_info = localtime(&data->date);
         strftime(date_str, 30, "%Y-%m-%d %H:%M", tm_info); // Format as YYYY-MM-DD HH:MM
 
-        mvwprintw(menu_win, ++y, 8, "Date: %s", date_str);
-
-        int color = PriorityColor(data->priority);
-        mvwprintw(menu_win, ++y, 8, "Priority: ");
-        wattron(menu_win, COLOR_PAIR(color));
-        mvwprintw(menu_win, y, 18, "%u", data->priority);
-        wattroff(menu_win, COLOR_PAIR(color));
+        mvwprintw(menu_win, y, 38, "Date: %s", date_str);
 
         y += 2;
 

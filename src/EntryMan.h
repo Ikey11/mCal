@@ -13,7 +13,7 @@ typedef struct
     time_t date;
     uint8_t priority; // Scale of 0-9
     uint8_t status;   // boolean
-    char name[APP_WIDTH];
+    char name[NAME_SIZE];
     char desc[DESC_SIZE]; // Description
     DoublyLinkedList subtask;
 } Task;

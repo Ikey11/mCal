@@ -25,13 +25,13 @@ int main()
     noecho();
     cbreak(); // Line buffering disabled. pass on everything
 
-    focus_win = newwin(FOCUS_LINES, APP_WIDTH, 1, 1);
-    focus_box = newwin(FOCUS_LINES + 2, APP_WIDTH + 2, 0, 0);
-    menu_win = newwin(MENU_LINES, APP_WIDTH, FOCUS_LINES + 3, 1);
-    menu_box = newwin(MENU_LINES + 2, APP_WIDTH + 2, FOCUS_LINES + 2, 0);
+    focus_win = newwin(FOCUS_LINES, FOCUS_WIDTH, 1, 1);
+    focus_box = newwin(FOCUS_LINES + 2, FOCUS_WIDTH + 2, 0, 0);
+    menu_win = newwin(MENU_LINES, MENU_WIDTH, 1, FOCUS_WIDTH + 4);
+    menu_box = newwin(MENU_LINES + 2, MENU_WIDTH + 2, 0, FOCUS_WIDTH + 3);
 
-    console_win = newwin(CONSOLE_LINES, APP_WIDTH, FOCUS_LINES + MENU_LINES + 5, 1);
-    console_box = newwin(CONSOLE_LINES + 2, APP_WIDTH + 2, FOCUS_LINES + MENU_LINES + 4, 0);
+    console_win = newwin(CONSOLE_LINES, CONSOLE_WIDTH, FOCUS_LINES + 3, 1);
+    console_box = newwin(CONSOLE_LINES + 2, CONSOLE_WIDTH + 2, FOCUS_LINES + 2, 0);
     console_enabled = true; // Enables console logging
 
     LOG_WARNING("This is a warning!");

@@ -28,7 +28,7 @@ Task *AddTask(DoublyLinkedList *list, sqlite3_int64 id, const char *name, time_t
     task->date = date;
     task->priority = priority;
     task->status = status;
-    strncpy(task->name, name, 99);
+    strncpy(task->name, name, NAME_SIZE);
     task->name[sizeof(task->name) - 1] = '\0'; // Ensure null termination
     if (description)
     {

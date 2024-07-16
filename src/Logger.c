@@ -4,7 +4,7 @@
 WINDOW *console_win = NULL;   // Initialize the global console window
 bool console_enabled = false; // Initialize the console enabled flag
 
-static char log_buffer[CONSOLE_LINES][APP_WIDTH];
+static char log_buffer[CONSOLE_LINES][CONSOLE_WIDTH];
 static LogLevel log_buffer_level[CONSOLE_LINES];
 static int current_line = 0;
 
@@ -18,20 +18,20 @@ void LogMessage(LogLevel level, const char *format, ...)
     va_list args;
     va_start(args, format);
 
-    char buffer[APP_WIDTH - 9];
+    char buffer[CONSOLE_WIDTH - 9];
     vsnprintf(buffer, sizeof(buffer), format, args);
 
     // Store the message in the circular buffer
     switch (level)
     {
     case LOG_INFO:
-        snprintf(log_buffer[current_line], APP_WIDTH, "INFO: %s", buffer);
+        snprintf(log_buffer[current_line], CONSOLE_WIDTH, "INFO: %s", buffer);
         break;
     case LOG_WARNING:
-        snprintf(log_buffer[current_line], APP_WIDTH, "WARNING: %s", buffer);
+        snprintf(log_buffer[current_line], CONSOLE_WIDTH, "WARNING: %s", buffer);
         break;
     case LOG_ERROR:
-        snprintf(log_buffer[current_line], APP_WIDTH, "ERROR: %s", buffer);
+        snprintf(log_buffer[current_line], CONSOLE_WIDTH, "ERROR: %s", buffer);
         break;
     }
     log_buffer_level[current_line] = level;
