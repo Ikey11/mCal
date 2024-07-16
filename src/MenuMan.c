@@ -57,6 +57,7 @@ ScreenState AddTaskScreen(WINDOW *menu_win, DoublyLinkedList *list, sqlite3 *db)
 
 // ----- Task List -----
 
+// Color table
 int PriorityColor(int priority)
 {
     // Set color based on priority
@@ -91,6 +92,103 @@ int PriorityColor(int priority)
     return color;
 }
 
+// Main function to handle smart word wrapping and printing
+void PrintDescription(WINDOW *focus_win, const char *desc)
+{
+    if (desc == NULL)
+        return;
+
+    size_t w = 0;                  // Word iterator
+    char smartdesc[DESC_SIZE * 2]; // Buffer to hold formatted description
+    size_t smartdesc_pos = 0;      // Current position in smartdesc
+    smartdesc[0] = '\0';           // Initialize smartdesc
+
+    char descword[DESC_SIZE]; // Buffer to hold current word
+    size_t line_length = 0;   // Current length of the line
+
+    for (size_t i = 0; i < DESC_SIZE && desc[i] != '\0'; i++)
+    {
+        char c = desc[i]; // Get char
+        if (c == ' ' || c == '\n')
+        {
+            descword[w] = '\0'; // Terminate current word
+
+            // Check if the word fits in the current line
+            if (line_length + w + 1 > FOCUS_WIDTH)
+            {
+                // If not, insert a newline
+                smartdesc[smartdesc_pos++] = '\n';
+                line_length = 0;
+            }
+
+            // Add the word to smartdesc
+            if (line_length > 0)
+            {
+                smartdesc[smartdesc_pos++] = ' '; // Add a space before the word if it's not the first word in the line
+                line_length++;
+            }
+
+            strncpy(smartdesc + smartdesc_pos, descword, w);
+            smartdesc_pos += w;
+            line_length += w;
+
+            // Reset word buffer
+            w = 0;
+
+            if (c == '\n')
+            {
+                smartdesc[smartdesc_pos++] = '\n';
+                line_length = 0;
+            }
+        }
+        else
+        {
+            descword[w++] = c; // Add char to current word
+        }
+    }
+
+    // Ensure the last word is added
+    if (w > 0)
+    {
+        descword[w] = '\0'; // Terminate the last word
+
+        if (line_length + w + 1 > FOCUS_WIDTH)
+        {
+            smartdesc[smartdesc_pos++] = '\n';
+        }
+        else if (line_length > 0)
+        {
+            smartdesc[smartdesc_pos++] = ' ';
+        }
+
+        strncpy(smartdesc + smartdesc_pos, descword, w);
+        smartdesc_pos += w;
+    }
+
+    smartdesc[smartdesc_pos] = '\0'; // Terminate the smartdesc buffer
+
+    // Print formatted text (if possible)
+    if (strlen(smartdesc) < DESC_SIZE)
+    {
+        // Print formatted text without ncurses wrapping
+        int row = 4, col = 0;
+        for (size_t i = 0; i < smartdesc_pos; i++)
+        {
+            if (smartdesc[i] == '\n')
+            {
+                row++;
+                col = 0;
+            }
+            else
+            {
+                mvwaddch(focus_win, row, col++, smartdesc[i]);
+            }
+        }
+    }
+    else
+        mvwprintw(focus_win, 4, 0, "%s", smartdesc);
+}
+
 void FocusMenu(WINDOW *focus_win, Node *entry)
 {
     Task *data = entry->data;
@@ -113,19 +211,7 @@ void FocusMenu(WINDOW *focus_win, Node *entry)
     mvwprintw(focus_win, 1, 29, "%u", data->priority);
     wattroff(focus_win, COLOR_PAIR(color));
 
-    // Parse description (+ word wrap)
-    if (data->desc == NULL)
-        return;
-
-    wmove(focus_win, 4, 1);
-    for (size_t i = 0; i < DESC_SIZE; i++)
-    {
-        char c = data->desc[i];
-        if (c == '\0')
-            break;
-
-        waddch(focus_win, c);
-    }
+    PrintDescription(focus_win, data->desc);
 }
 
 void PrintMenu(WINDOW *menu_win, DoublyLinkedList *list, Node *highlight)
