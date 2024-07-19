@@ -18,12 +18,20 @@ typedef struct
     DoublyLinkedList subtask;
 } Task;
 
+typedef enum
+{
+    DATE,        // Date Soonest->Latest
+    DATE_DES,    // Date Latest->Soonest
+    PRIORITY,    // Priority Greatest->Least
+    PRIORITY_ASC // Priority Least->Greatest
+} SortParam;
+
 Task *AddTask(DoublyLinkedList *list, sqlite3_int64 id, const char *name, time_t date, uint8_t priority, uint8_t status, const char *description);
 
 void EatSQL(DoublyLinkedList *list, sqlite3 *db);
 
 void RemoveTask(DoublyLinkedList *list, const char *name);
 
-void SortList(DoublyLinkedList *list);
+void SortList(DoublyLinkedList **list, SortParam param);
 
 #endif

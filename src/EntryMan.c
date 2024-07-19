@@ -7,7 +7,6 @@
 #include "EntryMan.h"
 #include "SQL.h"
 
-
 /// @brief Adds a task to the program
 /// @param list List of tasks to append to
 /// @param date Time task is due
@@ -81,22 +80,131 @@ void EatSQL(DoublyLinkedList *list, sqlite3 *db)
     }
 
     sqlite3_finalize(stmt);
+    SortList(&list, DATE);
 }
 
-/// @brief Sorts list from earliest to latest data via Bubble sort
-/// @param list The list to sort
-void SortList(DoublyLinkedList *list)
+// ----- Sorting -----
+
+int CompareTasks(const Task *task1, const Task *task2, SortParam param)
 {
-    Node *entry = list->head;
-
-    // Iterate to n-1
-    while (entry->next != NULL)
+    switch (param)
     {
-        Task *data = entry->data;
+    case DATE:
+        return (task1->date > task2->date) - (task1->date < task2->date);
+        break;
+    case DATE_DES:
+        return (task1->date < task2->date) - (task1->date > task2->date);
+        break;
+    case PRIORITY:
+        return (task1->priority < task2->priority) - (task1->priority > task2->priority);
+        break;
+    case PRIORITY_ASC:
+        return (task1->priority > task2->priority) - (task1->priority < task2->priority);
+        break;
+    }
 
-        entry = entry->next;
+    return 0;
+}
+
+void SplitList(Node *source, Node **frontRef, Node **backRef)
+{
+    Node *fast;
+    Node *slow;
+    if (source == NULL || source->next == NULL)
+    {
+        *frontRef = source;
+        *backRef = NULL;
+    }
+    else
+    {
+        slow = source;
+        fast = source->next;
+        while (fast != NULL)
+        {
+            fast = fast->next;
+            if (fast != NULL)
+            {
+                slow = slow->next;
+                fast = fast->next;
+            }
+        }
+        *frontRef = source;
+        *backRef = slow->next;
+        slow->next = NULL;
     }
 }
+
+Node *SortedMerge(Node *a, Node *b, SortParam param)
+{
+    Node *result = NULL;
+
+    if (a == NULL)
+        return b;
+    if (b == NULL)
+        return a;
+
+    Task *taskA = (Task *)a->data;
+    Task *taskB = (Task *)b->data;
+
+    if (CompareTasks(taskA, taskB, param) <= 0)
+    {
+        result = a;
+        result->next = SortedMerge(a->next, b, param);
+        if (result->next != NULL)
+            result->next->prev = result;
+    }
+    else
+    {
+        result = b;
+        result->next = SortedMerge(a, b->next, param);
+        if (result->next != NULL)
+            result->next->prev = result;
+    }
+
+    return result;
+}
+
+void MergeSort(Node **headRef, SortParam param)
+{
+    Node *head = *headRef;
+    Node *a;
+    Node *b;
+
+    if ((head == NULL) || (head->next == NULL))
+    {
+        return;
+    }
+
+    SplitList(head, &a, &b);
+
+    MergeSort(&a, param);
+    MergeSort(&b, param);
+
+    *headRef = SortedMerge(a, b, param);
+}
+
+/// @brief Sorts the list by merge sort
+/// @param list Linked list to be organized
+/// @param param Parameter to be sorted by (DATE, PRIORITY)
+void SortList(DoublyLinkedList **list, SortParam param)
+{
+    if ((*list)->head == NULL)
+        return;
+
+    MergeSort(&(*list)->head, param);
+
+    // Fix the tail pointer
+    Node *current = (*list)->head;
+    while (current->next != NULL)
+    {
+        current = current->next;
+    }
+    (*list)->head->prev = NULL; // TODO: Figure out how to prevent lack of terminator
+    (*list)->tail = current;
+    LOG_INFO("EntryMan::SortList: Task Sorted by DATE");
+}
+
+// ----- Data Testing -----
 
 /// @brief Test function
 /// @param list List to read
