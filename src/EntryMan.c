@@ -61,15 +61,11 @@ void EatSQL(DoublyLinkedList *list, sqlite3 *db)
     {
         sqlite3_int64 id = sqlite3_column_int64(stmt, 0);
         const char *name = sqlite3_column_text(stmt, 1);
-        const char *date_str = sqlite3_column_text(stmt, 2);
-        const char *time_str = sqlite3_column_text(stmt, 3);
+        const char *datetime_str = sqlite3_column_text(stmt, 2);
+        const char *softdatetime_str = sqlite3_column_text(stmt, 3);
         int priority = sqlite3_column_int(stmt, 4);
-        // int completed = sqlite3_column_int(stmt, 5);
         uint8_t completed = sqlite3_column_int(stmt, 5);
         const unsigned char *description = sqlite3_column_text(stmt, 6);
-
-        char datetime_str[128];
-        snprintf(datetime_str, sizeof(datetime_str), "%s %s", date_str, time_str);
 
         struct tm tm;
         memset(&tm, 0, sizeof(struct tm));

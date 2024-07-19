@@ -7,7 +7,7 @@
 int InitSQL(sqlite3 **db);
 
 // Adds a new entry to the tasks table
-int AddEntry(sqlite3 *db, sqlite3_int64 *id, const char *name, const char *date, const char *time, int priority, int completed, const char *description);
+int AddEntry(sqlite3 *db, sqlite3_int64 *id, const char *name, const char *datetime, const char *softdatetime, int priority, int completed, const char *description);
 
 // Removes an entry from the tasks table based on the id
 int RemoveEntry(sqlite3 *db, sqlite3_int64 id);
