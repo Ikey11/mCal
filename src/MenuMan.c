@@ -100,11 +100,11 @@ void PrintDate(WINDOW *menu_win, int year, int mon, int day, int sel)
     wrefresh(menu_win);
 }
 
-void PrintTime(WINDOW *menu_win, int hour, int min, int sel)
+void PrintTime(WINDOW *menu_win, int hour, int min, int sel, bool dst)
 {
     // Print info
     sel == 0 ? wattron(menu_win, A_REVERSE) : 0;
-    mvwprintw(menu_win, 5, 12, "%02d", hour);
+    mvwprintw(menu_win, 5, 12, dst ? "%02d DST" : "%02d", dst ? hour + 1 : hour);
     sel == 0 ? wattroff(menu_win, A_REVERSE) : 0;
 
     sel == 1 ? wattron(menu_win, A_REVERSE) : 0;
@@ -121,10 +121,8 @@ ScreenState AddTaskScreen(WINDOW *menu_win, DoublyLinkedList *list, sqlite3 *db)
     curs_set(1); // Show cursor
 
     char name[50];
-    char date_str[11], time_str[6];
     uint8_t priority;
     time_t date;
-    struct tm tm_info;
 
     // Get task data from user
     mvwprintw(menu_win, 3, 1, "Task name: ");
@@ -194,6 +192,16 @@ ScreenState AddTaskScreen(WINDOW *menu_win, DoublyLinkedList *list, sqlite3 *db)
         PrintDate(menu_win, year, mon, day, sel);
     }
 
+    // Determine whether date is in DST
+    int dst;
+    {
+        time_t time = GetTime(year, mon, day, 0, 0);
+        struct tm *temptime = gmtime(&time);
+        dst = temptime->tm_isdst;
+        if (dst < 0)
+            LOG_ERROR("Could not obtain DST info");
+    }
+
     c = 0;
     sel = 0;
 
@@ -201,7 +209,7 @@ ScreenState AddTaskScreen(WINDOW *menu_win, DoublyLinkedList *list, sqlite3 *db)
     mvwprintw(menu_win, 5, 1, "Task time: ");
     PrintPreview(menu_win, name, year, mon, day, hour, min, 0);
     PrintDate(menu_win, year, mon, day, -1);
-    PrintTime(menu_win, hour, min, sel);
+    PrintTime(menu_win, hour, min, sel, dst);
 
     curs_set(0); // Hide cursor
     while (c != 10)
@@ -238,7 +246,7 @@ ScreenState AddTaskScreen(WINDOW *menu_win, DoublyLinkedList *list, sqlite3 *db)
         }
 
         PrintPreview(menu_win, name, year, mon, day, hour, min, 0);
-        PrintTime(menu_win, hour, min, sel);
+        PrintTime(menu_win, hour, min, sel, dst);
     }
 
     c = 0;
@@ -252,7 +260,7 @@ ScreenState AddTaskScreen(WINDOW *menu_win, DoublyLinkedList *list, sqlite3 *db)
     wattroff(menu_win, COLOR_PAIR(color));
 
     PrintPreview(menu_win, name, year, mon, day, hour, min, priority);
-    PrintTime(menu_win, hour, min, -1);
+    PrintTime(menu_win, hour, min, -1, dst);
     curs_set(0); // Hide cursor
     while (c != 10)
     {
@@ -281,16 +289,19 @@ ScreenState AddTaskScreen(WINDOW *menu_win, DoublyLinkedList *list, sqlite3 *db)
         wrefresh(menu_win);
     }
 
-    char datetime_str[128];
-    snprintf(datetime_str, sizeof(datetime_str), "%s %s", date_str, time_str);
-    strptime(datetime_str, "%Y-%m-%d %H:%M", &tm_info);
-    date = mktime(&tm_info);
+    // Export as plaintext
+    char datetime_str[24];
+
+    time_t datetime = GetTime(year, mon, day, hour, min);
+    struct tm *tmtime = gmtime(&datetime);
+
+    strftime(datetime_str, sizeof(datetime_str), "%Y-%m-%d %H:%M:00.000", tmtime);
 
     // Add task
     sqlite3_int64 id;                                                   // ID of new entry
-    AddEntry(db, &id, name, date_str, time_str, priority, false, NULL); // Add task to database
+    AddEntry(db, &id, name, datetime_str, NULL, priority, false, NULL); // Add task to database
     LOG_INFO("Adding entry %ld to memory...", id);
-    AddTask(list, id, name, date, priority, false, NULL); // Add task to memory
+    AddTask(list, id, name, datetime, priority, false, NULL); // Add task to memory
     SortList(&list, DATE);
 
     noecho();
@@ -400,6 +411,9 @@ void PrintDescription(WINDOW *focus_win, const char *desc)
 
 void FocusMenu(WINDOW *focus_win, Node *entry)
 {
+    if (!entry)
+        return;
+
     Task *data = entry->data;
 
     int color = PriorityColor(data->priority);
@@ -427,7 +441,7 @@ void PrintMenu(WINDOW *menu_win, DoublyLinkedList *list, Node *highlight)
 {
     if (!highlight)
     {
-        LOG_INFO("Menu is empty");
+        //LOG_INFO("Menu is empty");
         return;
     }
 
@@ -486,12 +500,16 @@ ScreenState TaskScreen(WINDOW *menu_win, sqlite3 *db, DoublyLinkedList *list, No
     switch (c)
     {
     case KEY_UP:
+        if (!(*highlight))
+            break;
         if ((*highlight)->prev == NULL)
             *highlight = list->tail;
         else
             *highlight = (*highlight)->prev;
         break;
     case KEY_DOWN:
+        if (!(*highlight))
+            break;
         if ((*highlight)->next == NULL)
             *highlight = list->head;
         else
