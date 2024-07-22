@@ -13,4 +13,15 @@
 #include "EntryMan.h"
 #include "SQL.h"
 
+typedef enum
+{
+    TASK_SCREEN,
+    ADD_TASK_SCREEN,
+    EXIT_APP
+} ScreenState;
+
+
+// Color table
+int PriorityColor(int priority);
+
 #endif

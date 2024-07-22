@@ -1,5 +1,40 @@
 #include "main.h"
-#include "MenuMan.h"
+#include "GUITask.h"
+#include "GUIContent.h"
+
+int PriorityColor(int priority)
+{
+    // Set color based on priority
+    int color;
+    switch (priority)
+    {
+    case 0:
+    case 1:
+        color = 2;
+        break;
+    case 2:
+    case 3:
+        color = 4;
+        break;
+    case 4:
+    case 5:
+        color = 5;
+        break;
+    case 6:
+    case 7:
+        color = 3;
+        break;
+    case 8:
+    case 9:
+        color = 1;
+        break;
+    default:
+        color = 7;
+        break;
+    }
+
+    return color;
+}
 
 int main()
 {
@@ -76,7 +111,7 @@ int main()
         box(console_box, 0, 0);
         wattroff(console_box, COLOR_PAIR(1));
         wrefresh(console_box);
-        LOG_INFO("Boxes drawn");    // Important to use or console will not display immediantly on boot
+        LOG_INFO("Boxes drawn"); // Important to use or console will not display immediantly on boot
     }
 
     while (running)
@@ -90,6 +125,20 @@ int main()
         // Refresh windows
         wrefresh(focus_win);
         wrefresh(menu_win);
+
+        // Find cursor
+        if (!highlight && list->size > 0)
+        {
+            if (list->head)
+            {
+                highlight = list->head;
+            }
+            else
+            {
+                // If head is NULL list should be empty
+                LOG_ERROR("main::main::List size error! Expected: 0 Got: %d", list->size);
+            }
+        }
 
         // Menu window state machine
         switch (current_screen)
