@@ -9,12 +9,13 @@
 
 /// @brief Adds a task to the program
 /// @param list List of tasks to append to
-/// @param date Time task is due
+/// @param date Hard deadline
+/// @param sdate Soft deadline
 /// @param priority The priority of the task (0-9)
 /// @param status Whether the task is completed (0-1)
 /// @param name Name of task
 /// @return Added task or NULL on memory allocation failure
-Task *AddTask(DoublyLinkedList *list, sqlite3_int64 id, const char *name, time_t date, uint8_t priority, uint8_t status, const char *description)
+Task *AddTask(DoublyLinkedList *list, sqlite3_int64 id, const char *name, time_t date, time_t sdate, uint8_t priority, uint8_t status, const char *description)
 {
     // Allocate memory for a new Task
     Task *task = (Task *)malloc(sizeof(Task));
@@ -24,7 +25,8 @@ Task *AddTask(DoublyLinkedList *list, sqlite3_int64 id, const char *name, time_t
     }
 
     task->id = id;
-    task->date = date;
+    task->date = date;   // Hard deadline
+    task->sdate = sdate; // Soft deadline
     task->priority = priority;
     task->status = status;
     strncpy(task->name, name, NAME_SIZE);
@@ -67,12 +69,25 @@ void EatSQL(DoublyLinkedList *list, sqlite3 *db)
         uint8_t completed = sqlite3_column_int(stmt, 5);
         const unsigned char *description = sqlite3_column_text(stmt, 6);
 
-        struct tm tm;
-        memset(&tm, 0, sizeof(struct tm));
-        strptime(datetime_str, "%Y-%m-%d %H:%M", &tm);
-        time_t date = mktime(&tm);
+        // Grab hard deadline
+        struct tm hardtm = {0};
+        strptime(datetime_str, "%Y-%m-%d %H:%M", &hardtm);
+        hardtm.tm_isdst = -1;
+        time_t date = mktime(&hardtm);
 
-        AddTask(list, id, name, date, priority, completed, description);
+        // Grab soft deadline is possible
+        if (softdatetime_str)
+        {
+            struct tm softtm = {0};
+            strptime(softdatetime_str, "%Y-%m-%d %H:%M", &softtm);
+            softtm.tm_isdst = -1;
+            time_t sdate = mktime(&softtm);
+            AddTask(list, id, name, date, sdate, priority, completed, description);
+        }
+        else
+        {
+            AddTask(list, id, name, date, -1, priority, completed, description);
+        }
     }
 
     sqlite3_finalize(stmt);

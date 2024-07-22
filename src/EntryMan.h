@@ -10,7 +10,7 @@
 typedef struct
 {
     sqlite3_int64 id;
-    time_t date;
+    time_t date, sdate;
     uint8_t priority; // Scale of 0-9
     uint8_t status;   // boolean
     char name[NAME_SIZE];
@@ -26,7 +26,7 @@ typedef enum
     PRIORITY_ASC // Priority Least->Greatest
 } SortParam;
 
-Task *AddTask(DoublyLinkedList *list, sqlite3_int64 id, const char *name, time_t date, uint8_t priority, uint8_t status, const char *description);
+Task *AddTask(DoublyLinkedList *list, sqlite3_int64 id, const char *name, time_t date, time_t sdate, uint8_t priority, uint8_t status, const char *description);
 
 void EatSQL(DoublyLinkedList *list, sqlite3 *db);
 
