@@ -11,6 +11,7 @@ time_t GetTime(int year, int mon, int day, int hour, int min)
     loctime.tm_hour = hour;
     loctime.tm_min = min;
     loctime.tm_sec = 0;
+    loctime.tm_isdst = -1;
 
     time_t temp_time = mktime(&loctime);
 }
@@ -58,11 +59,11 @@ void PrintDate(WINDOW *menu_win, int year, int mon, int day, int sel)
     wrefresh(menu_win);
 }
 
-void PrintTime(WINDOW *menu_win, int hour, int min, int sel, bool dst)
+void PrintTime(WINDOW *menu_win, int hour, int min, int sel)
 {
     // Print info
     sel == 0 ? wattron(menu_win, A_REVERSE) : 0;
-    mvwprintw(menu_win, 5, 12, dst ? "%02d DST" : "%02d", dst ? hour + 1 : hour);
+    mvwprintw(menu_win, 5, 12, "%02d", hour);
     sel == 0 ? wattroff(menu_win, A_REVERSE) : 0;
 
     sel == 1 ? wattron(menu_win, A_REVERSE) : 0;
@@ -75,17 +76,47 @@ void PrintTime(WINDOW *menu_win, int hour, int min, int sel, bool dst)
 // Add new task
 ScreenState AddTaskScreen(WINDOW *menu_win, DoublyLinkedList *list, sqlite3 *db)
 {
-    echo();
-    curs_set(1); // Show cursor
-
-    char name[50];
+    char name[NAME_SIZE];
+    char desc[DESC_SIZE];
     uint8_t priority;
     time_t date;
+    int c; // Latest character input
 
     // Get task data from user
+
+    // Get task name
+    curs_set(1); // Show cursor
     mvwprintw(menu_win, 3, 1, "Task name: ");
     wrefresh(menu_win);
-    wgetnstr(menu_win, name, NAME_SIZE);
+
+    // Read user input
+    int index = 0;
+    while ((c = wgetch(menu_win)) != '\n')
+    {
+        // Early exit
+        if (c == 27)
+        {
+            curs_set(0);
+            return TASK_SCREEN;
+        }
+        if (c == KEY_BACKSPACE || c == 127 || c == 8)
+        { // Handle backspace
+            if (index > 0)
+            {
+                index--;
+                mvwdelch(menu_win, 3, index + 12);
+            }
+        }
+        else if (index < NAME_SIZE - 1)
+        {
+            name[index++] = c;
+            waddch(menu_win, c);
+        }
+        wrefresh(menu_win);
+    }
+    curs_set(0); // Hide cursor
+
+    name[index] = '\0'; // Null-terminate the string
 
     // Get current time
     time_t currtime = time(NULL);
@@ -108,8 +139,7 @@ ScreenState AddTaskScreen(WINDOW *menu_win, DoublyLinkedList *list, sqlite3 *db)
     PrintPreview(menu_win, name, year, mon, day, 0, 0, 0);
     PrintDate(menu_win, year, mon, day, sel);
 
-    curs_set(0); // Hide cursor
-    int c;       // Latest character input
+    c = 0;
     while (c != 10)
     {
         c = wgetch(menu_win);
@@ -150,16 +180,6 @@ ScreenState AddTaskScreen(WINDOW *menu_win, DoublyLinkedList *list, sqlite3 *db)
         PrintDate(menu_win, year, mon, day, sel);
     }
 
-    // Determine whether date is in DST
-    int dst;
-    {
-        time_t time = GetTime(year, mon, day, 0, 0);
-        struct tm *temptime = gmtime(&time);
-        dst = temptime->tm_isdst;
-        if (dst < 0)
-            LOG_ERROR("Could not obtain DST info");
-    }
-
     c = 0;
     sel = 0;
 
@@ -167,9 +187,8 @@ ScreenState AddTaskScreen(WINDOW *menu_win, DoublyLinkedList *list, sqlite3 *db)
     mvwprintw(menu_win, 5, 1, "Task time: ");
     PrintPreview(menu_win, name, year, mon, day, hour, min, 0);
     PrintDate(menu_win, year, mon, day, -1);
-    PrintTime(menu_win, hour, min, sel, dst);
+    PrintTime(menu_win, hour, min, sel);
 
-    curs_set(0); // Hide cursor
     while (c != 10)
     {
         c = wgetch(menu_win);
@@ -204,7 +223,7 @@ ScreenState AddTaskScreen(WINDOW *menu_win, DoublyLinkedList *list, sqlite3 *db)
         }
 
         PrintPreview(menu_win, name, year, mon, day, hour, min, 0);
-        PrintTime(menu_win, hour, min, sel, dst);
+        PrintTime(menu_win, hour, min, sel);
     }
 
     c = 0;
@@ -218,8 +237,7 @@ ScreenState AddTaskScreen(WINDOW *menu_win, DoublyLinkedList *list, sqlite3 *db)
     wattroff(menu_win, COLOR_PAIR(color));
 
     PrintPreview(menu_win, name, year, mon, day, hour, min, priority);
-    PrintTime(menu_win, hour, min, -1, dst);
-    curs_set(0); // Hide cursor
+    PrintTime(menu_win, hour, min, -1);
     while (c != 10)
     {
         c = wgetch(menu_win);
@@ -247,6 +265,57 @@ ScreenState AddTaskScreen(WINDOW *menu_win, DoublyLinkedList *list, sqlite3 *db)
         wrefresh(menu_win);
     }
 
+    // Get task description
+    curs_set(1); // Show cursor
+    mvwprintw(menu_win, 7, 1, "Description: ");
+    wrefresh(menu_win);
+
+    // Read user input
+    c = 0, index = 0;
+    int cur_y = 7, cur_x = 15; // Initial cursor position after "Description: "
+    curs_set(1);               // Show cursor
+
+    while ((c = wgetch(menu_win)) != '\n')
+    {
+        if (c == KEY_BACKSPACE || c == 127 || c == 8)
+        { // Handle backspace
+            if (index > 0)
+            {
+                index--;
+                getyx(menu_win, cur_y, cur_x);
+                if (cur_x == 1)
+                {
+                    // Move up to the end of the previous line
+                    cur_y--;
+                    cur_x = MENU_WIDTH - 2;
+                }
+                else
+                {
+                    cur_x--;
+                }
+                mvwdelch(menu_win, cur_y, cur_x);
+                wmove(menu_win, cur_y, cur_x);
+            }
+        }
+        else if (index < DESC_SIZE - 1)
+        {
+            desc[index++] = c;
+            waddch(menu_win, c);
+            getyx(menu_win, cur_y, cur_x);
+            if (cur_x == MENU_WIDTH - 1)
+            {
+                // Move to the next line
+                cur_y++;
+                cur_x = 1;
+            }
+            wmove(menu_win, cur_y, cur_x);
+        }
+        wrefresh(menu_win);
+    }
+    curs_set(0); // Hide cursor
+
+    desc[index] = '\0'; // Null-terminate the string
+
     // Export as plaintext
     char datetime_str[24];
 
@@ -257,9 +326,9 @@ ScreenState AddTaskScreen(WINDOW *menu_win, DoublyLinkedList *list, sqlite3 *db)
 
     // Add task
     sqlite3_int64 id;                                                   // ID of new entry
-    AddEntry(db, &id, name, datetime_str, NULL, priority, false, NULL); // Add task to database
+    AddEntry(db, &id, name, datetime_str, NULL, priority, false, desc); // Add task to database
     LOG_INFO("Adding entry %ld to memory...", id);
-    AddTask(list, id, name, datetime, priority, false, NULL); // Add task to memory
+    AddTask(list, id, name, datetime, -1, priority, false, desc); // Add task to memory
     SortList(&list, DATE);
 
     noecho();
