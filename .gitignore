@@ -2,6 +2,8 @@
 .vscode/*
 build/*
 
+# SQL databases
+*.db
 
 # Prerequisites
 *.d
