@@ -20,8 +20,10 @@ typedef enum
     EXIT_APP
 } ScreenState;
 
-
 // Color table
 int PriorityColor(int priority);
+
+// Main function to handle smart word wrapping and printing
+void WordWrap(WINDOW *focus_win, const char *buffer, size_t buffer_size, int y, int x, int width);
 
 #endif

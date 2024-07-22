@@ -36,6 +36,107 @@ int PriorityColor(int priority)
     return color;
 }
 
+void WordWrap(WINDOW *focus_win, const char *buffer, size_t buffer_size, int y, int x, int width)
+{
+    if (buffer == NULL)
+        return;
+    if (strlen(buffer) > buffer_size)
+    {
+        LOG_ERROR("main::WordWrap: Buffer exceeds buffer size");
+        return;
+    }
+
+    size_t w = 0;                  // Word iterator
+    char smartdesc[buffer_size * 2]; // Buffer to hold formatted description
+    size_t smartdesc_pos = 0;      // Current position in smartdesc
+    smartdesc[0] = '\0';           // Initialize smartdesc
+
+    char descword[buffer_size]; // Buffer to hold current word
+    size_t line_length = 0;   // Current length of the line
+
+    for (size_t i = 0; i < buffer_size && buffer[i] != '\0'; i++)
+    {
+        char c = buffer[i]; // Get char
+        if (c == ' ' || c == '\n')
+        {
+            descword[w] = '\0'; // Terminate current word
+
+            // Check if the word fits in the current line
+            if (line_length + w + 1 > width)
+            {
+                // If not, insert a newline
+                smartdesc[smartdesc_pos++] = '\n';
+                line_length = 0;
+            }
+
+            // Add the word to smartdesc
+            if (line_length > 0)
+            {
+                smartdesc[smartdesc_pos++] = ' '; // Add a space before the word if it's not the first word in the line
+                line_length++;
+            }
+
+            strncpy(smartdesc + smartdesc_pos, descword, w);
+            smartdesc_pos += w;
+            line_length += w;
+
+            // Reset word buffer
+            w = 0;
+
+            if (c == '\n')
+            {
+                smartdesc[smartdesc_pos++] = '\n';
+                line_length = 0;
+            }
+        }
+        else
+        {
+            descword[w++] = c; // Add char to current word
+        }
+    }
+
+    // Ensure the last word is added
+    if (w > 0)
+    {
+        descword[w] = '\0'; // Terminate the last word
+
+        if (line_length + w + 1 > width)
+        {
+            smartdesc[smartdesc_pos++] = '\n';
+        }
+        else if (line_length > 0)
+        {
+            smartdesc[smartdesc_pos++] = ' ';
+        }
+
+        strncpy(smartdesc + smartdesc_pos, descword, w);
+        smartdesc_pos += w;
+    }
+
+    smartdesc[smartdesc_pos] = '\0'; // Terminate the smartdesc buffer
+
+    // Print formatted text (if possible)
+    if (strlen(smartdesc) < DESC_SIZE)
+    {
+        // Print formatted text without ncurses wrapping
+        int row = y, col = x;
+        for (size_t i = 0; i < smartdesc_pos; i++)
+        {
+            if (smartdesc[i] == '\n')
+            {
+                row++;
+                col = x;
+            }
+            else
+            {
+                mvwaddch(focus_win, row, col++, smartdesc[i]);
+            }
+        }
+    }
+    else
+        mvwprintw(focus_win, y, x, "%s", smartdesc);
+}
+
 int main()
 {
     WINDOW *menu_win, *focus_win,
