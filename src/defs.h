@@ -11,7 +11,9 @@
 #define MENU_LINES 20
 #define CONSOLE_LINES 9
 
-#define DESC_SIZE FOCUS_WIDTH * (FOCUS_LINES - 4) // Description size
-#define NAME_SIZE FOCUS_WIDTH   // Focus menu must be able to show full name
+#define DESC_SIZE FOCUS_WIDTH * (FOCUS_LINES - 5) + 1 // Description size
+#define NAME_SIZE FOCUS_WIDTH + 1   // Focus menu must be able to show full name
+
+#define SQL_MESSAGE_SIZE 124 + NAME_SIZE + 23 + 23 + 1 + 1 + DESC_SIZE
 
 #endif

@@ -53,7 +53,7 @@ int InitSQL(sqlite3 **db)
 int AddEntry(sqlite3 *db, sqlite3_int64 *id, const char *name, const char *datetime, const char *softdatetime, int priority, int completed, const char *description)
 {
     char *zErrMsg = 0;
-    char sql[1024];
+    char sql[SQL_MESSAGE_SIZE];
 
     // Account for optional description
     if (description && softdatetime)
