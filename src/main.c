@@ -100,7 +100,7 @@ void WordWrap(WINDOW *focus_win, const char *buffer, size_t buffer_size, int y, 
     {
         descword[w] = '\0'; // Terminate the last word
 
-        if (line_length + w + 1 > width)
+        if (w < width && line_length + w + 1 > width)
         {
             smartdesc[smartdesc_pos++] = '\n';
         }
@@ -116,13 +116,13 @@ void WordWrap(WINDOW *focus_win, const char *buffer, size_t buffer_size, int y, 
     smartdesc[smartdesc_pos] = '\0'; // Terminate the smartdesc buffer
 
     // Print formatted text (if possible)
-    if (strlen(smartdesc) < DESC_SIZE)
+    if (strlen(smartdesc) < buffer_size)
     {
         // Print formatted text without ncurses wrapping
         int row = y, col = x;
         for (size_t i = 0; i < smartdesc_pos; i++)
         {
-            if (smartdesc[i] == '\n')
+            if (col > width || smartdesc[i] == '\n')
             {
                 row++;
                 col = x;
@@ -177,6 +177,8 @@ int main()
     ScreenState current_screen = TASK_SCREEN;
 
     // ----- Create data -----
+
+    sort_param = DATE;
 
     // Init SQL
     sqlite3 *db;

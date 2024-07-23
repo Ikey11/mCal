@@ -7,8 +7,8 @@
 #define CONSOLE_WIDTH 93
 
 // Define window sizes
-#define FOCUS_LINES 20
-#define MENU_LINES 20
+#define FOCUS_LINES 21
+#define MENU_LINES 21
 #define CONSOLE_LINES 9
 
 #define DESC_SIZE FOCUS_WIDTH * (FOCUS_LINES - 5) + 1 // Description size
