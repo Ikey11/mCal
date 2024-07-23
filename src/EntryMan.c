@@ -7,6 +7,9 @@
 #include "EntryMan.h"
 #include "SQL.h"
 
+SortParam sort_param;
+
+
 /// @brief Adds a task to the program
 /// @param list List of tasks to append to
 /// @param date Hard deadline
@@ -91,14 +94,14 @@ void EatSQL(DoublyLinkedList *list, sqlite3 *db)
     }
 
     sqlite3_finalize(stmt);
-    SortList(&list, DATE);
+    SortList(&list);
 }
 
 // ----- Sorting -----
 
-int CompareTasks(const Task *task1, const Task *task2, SortParam param)
+int CompareTasks(const Task *task1, const Task *task2)
 {
-    switch (param)
+    switch (sort_param)
     {
     case DATE:
         return (task1->date > task2->date) - (task1->date < task2->date);
@@ -145,7 +148,7 @@ void SplitList(Node *source, Node **frontRef, Node **backRef)
     }
 }
 
-Node *SortedMerge(Node *a, Node *b, SortParam param)
+Node *SortedMerge(Node *a, Node *b)
 {
     Node *result = NULL;
 
@@ -157,17 +160,17 @@ Node *SortedMerge(Node *a, Node *b, SortParam param)
     Task *taskA = (Task *)a->data;
     Task *taskB = (Task *)b->data;
 
-    if (CompareTasks(taskA, taskB, param) <= 0)
+    if (CompareTasks(taskA, taskB) <= 0)
     {
         result = a;
-        result->next = SortedMerge(a->next, b, param);
+        result->next = SortedMerge(a->next, b);
         if (result->next != NULL)
             result->next->prev = result;
     }
     else
     {
         result = b;
-        result->next = SortedMerge(a, b->next, param);
+        result->next = SortedMerge(a, b->next);
         if (result->next != NULL)
             result->next->prev = result;
     }
@@ -175,7 +178,7 @@ Node *SortedMerge(Node *a, Node *b, SortParam param)
     return result;
 }
 
-void MergeSort(Node **headRef, SortParam param)
+void MergeSort(Node **headRef)
 {
     Node *head = *headRef;
     Node *a;
@@ -188,21 +191,21 @@ void MergeSort(Node **headRef, SortParam param)
 
     SplitList(head, &a, &b);
 
-    MergeSort(&a, param);
-    MergeSort(&b, param);
+    MergeSort(&a);
+    MergeSort(&b);
 
-    *headRef = SortedMerge(a, b, param);
+    *headRef = SortedMerge(a, b);
 }
 
 /// @brief Sorts the list by merge sort
 /// @param list Linked list to be organized
 /// @param param Parameter to be sorted by (DATE, PRIORITY)
-void SortList(DoublyLinkedList **list, SortParam param)
+void SortList(DoublyLinkedList **list)
 {
     if ((*list)->head == NULL)
         return;
 
-    MergeSort(&(*list)->head, param);
+    MergeSort(&(*list)->head);
 
     // Fix the tail pointer
     Node *current = (*list)->head;

@@ -26,12 +26,14 @@ typedef enum
     PRIORITY_ASC // Priority Least->Greatest
 } SortParam;
 
+extern SortParam sort_param;
+
 Task *AddTask(DoublyLinkedList *list, sqlite3_int64 id, const char *name, time_t date, time_t sdate, uint8_t priority, uint8_t status, const char *description);
 
 void EatSQL(DoublyLinkedList *list, sqlite3 *db);
 
 void RemoveTask(DoublyLinkedList *list, const char *name);
 
-void SortList(DoublyLinkedList **list, SortParam param);
+void SortList(DoublyLinkedList **list);
 
 #endif

@@ -329,7 +329,7 @@ ScreenState AddTaskScreen(WINDOW *menu_win, DoublyLinkedList *list, sqlite3 *db)
     AddEntry(db, &id, name, datetime_str, NULL, priority, false, desc); // Add task to database
     LOG_INFO("Adding entry %ld to memory...", id);
     AddTask(list, id, name, datetime, -1, priority, false, desc); // Add task to memory
-    SortList(&list, DATE);
+    SortList(&list);
 
     noecho();
     curs_set(0); // Hide cursor
