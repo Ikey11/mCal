@@ -52,52 +52,74 @@ int InitSQL(sqlite3 **db)
 /// @return
 int AddEntry(sqlite3 *db, sqlite3_int64 *id, const char *name, const char *datetime, const char *softdatetime, int priority, int completed, const char *description)
 {
-    char *zErrMsg = 0;
-    char sql[SQL_MESSAGE_SIZE];
+    const char *sql;
+    sqlite3_stmt *stmt;
+    int rc;
 
-    // Account for optional description
+    // Prepare the SQL statement based on the provided arguments
     if (description && softdatetime)
     {
-        snprintf(sql, sizeof(sql), "INSERT INTO tasks (name, datetime, softdatetime, priority, completed, description) "
-                                   "VALUES ('%s', '%s', '%s', %d, %d, '%s');",
-                 name, datetime, softdatetime, priority, completed, description);
+        sql = "INSERT INTO tasks (name, datetime, softdatetime, priority, completed, description) "
+              "VALUES (?, ?, ?, ?, ?, ?);";
     }
     else if (description)
     {
-        snprintf(sql, sizeof(sql), "INSERT INTO tasks (name, datetime, priority, completed, description) "
-                                   "VALUES ('%s', '%s', %d, %d, '%s');",
-                 name, datetime, priority, completed, description);
+        sql = "INSERT INTO tasks (name, datetime, priority, completed, description) "
+              "VALUES (?, ?, ?, ?, ?);";
     }
     else if (softdatetime)
     {
-        snprintf(sql, sizeof(sql), "INSERT INTO tasks (name, datetime, softdatetime, priority, completed) "
-                                   "VALUES ('%s', '%s', '%s', %d, %d);",
-                 name, datetime, softdatetime, priority, completed);
+        sql = "INSERT INTO tasks (name, datetime, softdatetime, priority, completed) "
+              "VALUES (?, ?, ?, ?, ?);";
     }
     else
     {
-        snprintf(sql, sizeof(sql), "INSERT INTO tasks (name, datetime, priority, completed) "
-                                   "VALUES ('%s', '%s', %d, %d);",
-                 name, datetime, priority, completed);
+        sql = "INSERT INTO tasks (name, datetime, priority, completed) "
+              "VALUES (?, ?, ?, ?);";
     }
 
-    int rc = sqlite3_exec(db, sql, 0, 0, &zErrMsg); // Run SQL command
-
-    // Error checking
+    // Prepare the SQL statement
+    rc = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
     if (rc != SQLITE_OK)
     {
-        LOG_ERROR("SQL::AddEntry: SQL error: %s\n", zErrMsg);
-        sqlite3_free(zErrMsg);
+        LOG_ERROR("Cannot prepare statement: %s", sqlite3_errmsg(db));
         return rc;
     }
 
-    LOG_INFO("Entry added!");
+    // Bind the values to the placeholders
+    int index = 1;
+    sqlite3_bind_text(stmt, index++, name, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, index++, datetime, -1, SQLITE_STATIC);
+
+    if (softdatetime)
+    {
+        sqlite3_bind_text(stmt, index++, softdatetime, -1, SQLITE_STATIC);
+    }
+    sqlite3_bind_int(stmt, index++, priority);
+    sqlite3_bind_int(stmt, index++, completed);
+
+    if (description)
+    {
+        sqlite3_bind_text(stmt, index++, description, -1, SQLITE_STATIC);
+    }
+
+    // Execute the statement
+    rc = sqlite3_step(stmt);
+    if (rc != SQLITE_DONE)
+    {
+        LOG_ERROR("Execution failed: %s", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        return rc;
+    }
+
+    // Clean up
+    sqlite3_finalize(stmt);
 
     // Get the ID of the newly inserted row
     sqlite3_int64 ID = sqlite3_last_insert_rowid(db);
-
     *id = ID;
 
+    LOG_INFO("Entry added!");
     LOG_INFO("SQL::AddEntry: Added %s with ID %lld", name, *id);
 
     return SQLITE_OK;
