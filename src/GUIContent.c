@@ -218,6 +218,10 @@ ScreenState AddTaskScreen(WINDOW *menu_win, DoublyLinkedList *list, sqlite3 *db)
                 min = (min == 0) ? 59 : min - 1;
             break;
 
+        case 'm':
+            hour = 23;
+            min = 59;
+
         default:
             break;
         }
@@ -322,12 +326,12 @@ ScreenState AddTaskScreen(WINDOW *menu_win, DoublyLinkedList *list, sqlite3 *db)
     time_t datetime = GetTime(year, mon, day, hour, min);
 
     snprintf(datetime_str, sizeof(datetime_str), "%04d-%02d-%02d %02d:%02d:00.000",
-             year, mon, day, hour, min);
+             year, mon + 1, day, hour, min);
 
     // Add task
     sqlite3_int64 id;                                                   // ID of new entry
     AddEntry(db, &id, name, datetime_str, NULL, priority, false, desc); // Add task to database
-    LOG_INFO("Adding entry %ld to memory...", id);
+    LOG_INFO("Adding entry %ld to memory with timestamp %s", id, datetime_str);
     AddTask(list, id, name, datetime, -1, priority, false, desc); // Add task to memory
     SortList(&list);
 
