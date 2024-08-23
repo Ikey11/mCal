@@ -101,6 +101,12 @@ void EatSQL(DoublyLinkedList *list, sqlite3 *db)
 
 int CompareTasks(const Task *task1, const Task *task2)
 {
+    // Prioritize incomplete tasks
+    if (task1->status != task2->status)
+    {
+        return task1->status - task2->status; // Incomplete (false) should come first
+    }
+
     switch (sort_param)
     {
     case DATE:
