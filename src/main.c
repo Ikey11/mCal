@@ -191,6 +191,8 @@ int main()
     size_t *n_tasks = &list->size;
     LOG_INFO("Finished creating DLL");
 
+    size_t offset = 0;
+
     EatSQL(list, db);
     LOG_INFO("Grabbed %d tasks from SQL database!", *n_tasks);
 
@@ -247,7 +249,7 @@ int main()
         switch (current_screen)
         {
         case TASK_SCREEN:
-            current_screen = TaskScreen(menu_win, db, list, &highlight, n_tasks);
+            current_screen = TaskScreen(menu_win, db, list, &highlight, n_tasks, &offset);
             break;
         case ADD_TASK_SCREEN:
             current_screen = AddTaskScreen(menu_win, list, db);

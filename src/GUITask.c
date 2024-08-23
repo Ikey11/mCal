@@ -45,7 +45,7 @@ void FocusMenu(WINDOW *focus_win, Node *entry)
     WordWrap(focus_win, data->desc, DESC_SIZE, 4, 0, FOCUS_WIDTH);
 }
 
-void PrintMenu(WINDOW *menu_win, DoublyLinkedList *list, Node *highlight)
+void PrintMenu(WINDOW *menu_win, DoublyLinkedList *list, Node *highlight, size_t offset)
 {
     if (!highlight)
     {
@@ -58,6 +58,14 @@ void PrintMenu(WINDOW *menu_win, DoublyLinkedList *list, Node *highlight)
 
     // Retrieve data
     Node *entry = list->head;
+
+    // Offset
+    for (int i = 0; i < offset; i++)
+    {
+        // Move to next entry
+        entry = entry->next;
+    }
+
     while (entry)
     {
         Task *data = entry->data;
@@ -109,10 +117,10 @@ void PrintMenu(WINDOW *menu_win, DoublyLinkedList *list, Node *highlight)
     wrefresh(menu_win);
 }
 
-ScreenState TaskScreen(WINDOW *menu_win, sqlite3 *db, DoublyLinkedList *list, Node **highlight, size_t *n_tasks)
+ScreenState TaskScreen(WINDOW *menu_win, sqlite3 *db, DoublyLinkedList *list, Node **highlight, size_t *n_tasks, size_t *list_offset)
 {
     int c;
-    PrintMenu(menu_win, list, *highlight);
+    PrintMenu(menu_win, list, *highlight, *list_offset);
     c = wgetch(menu_win);
 
     switch (c)
@@ -133,6 +141,14 @@ ScreenState TaskScreen(WINDOW *menu_win, sqlite3 *db, DoublyLinkedList *list, No
         else
             *highlight = (*highlight)->next;
         break;
+    case KEY_NPAGE:
+        if (*list_offset < *n_tasks - 1)
+            (*list_offset)++;
+        break;
+    case KEY_PPAGE:
+        if (*list_offset > 0)
+            (*list_offset)--;
+        break;
     case 'a': // Add tasks
         return ADD_TASK_SCREEN;
         break;
@@ -146,6 +162,7 @@ ScreenState TaskScreen(WINDOW *menu_win, sqlite3 *db, DoublyLinkedList *list, No
             Task *selected_data = (*highlight)->data;
             selected_data->status = !selected_data->status;
             CompleteEntry(db, selected_data->id);
+            SortList(&list);
         }
         break;
     case 'd': // Delete
@@ -171,6 +188,6 @@ ScreenState TaskScreen(WINDOW *menu_win, sqlite3 *db, DoublyLinkedList *list, No
         }
         break;
     }
-    PrintMenu(menu_win, list, *highlight);
+    PrintMenu(menu_win, list, *highlight, *list_offset);
     return TASK_SCREEN;
 }

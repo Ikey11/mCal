@@ -11,6 +11,6 @@
 
 void FocusMenu(WINDOW *focus_win, Node *highlight);
 
-ScreenState TaskScreen(WINDOW *menu_win, sqlite3 *db, DoublyLinkedList *list, Node **highlight, size_t *n_tasks);
+ScreenState TaskScreen(WINDOW *menu_win, sqlite3 *db, DoublyLinkedList *list, Node **highlight, size_t *n_tasks, size_t *list_offset);
 
 #endif
