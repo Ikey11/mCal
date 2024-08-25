@@ -7,6 +7,16 @@
 #include "EntryMan.h"
 #include "SQL.h"
 
+#ifdef _WIN32
+#include "../lib/strptime.h"
+#endif
+
+#ifdef _WIN32
+    #pragma message("_WIN32 is defined")
+#else
+    #pragma message("_WIN32 is not defined")
+#endif
+
 SortParam sort_param;
 
 
