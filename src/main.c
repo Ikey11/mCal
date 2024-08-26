@@ -137,9 +137,15 @@ void WordWrap(WINDOW *focus_win, const char *buffer, size_t buffer_size, int y, 
         mvwprintw(focus_win, y, x, "%s", smartdesc);
 }
 
+void HintBox()
+{
+    return;
+}
+
 int main()
 {
-    WINDOW *menu_win, *focus_win,
+    // Windows use snake case
+    WINDOW *menu_win, *focus_win, *hint_box,
         *menu_box, *focus_box, *console_box;
 
     // ----- Init Window -----
@@ -156,6 +162,7 @@ int main()
     init_pair(4, COLOR_BLUE, COLOR_BLACK);
     init_pair(5, COLOR_MAGENTA, COLOR_BLACK);
     init_pair(6, COLOR_CYAN, COLOR_BLACK);
+    init_pair(9, COLOR_BLACK, COLOR_WHITE);
 
     clear();
     noecho();
@@ -165,9 +172,10 @@ int main()
     focus_box = newwin(FOCUS_LINES + 2, FOCUS_WIDTH + 2, 0, 0);
     menu_win = newwin(MENU_LINES, MENU_WIDTH, 1, FOCUS_WIDTH + 4);
     menu_box = newwin(MENU_LINES + 2, MENU_WIDTH + 2, 0, FOCUS_WIDTH + 3);
+    hint_box = newwin(1, CONSOLE_WIDTH + 2, FOCUS_LINES + 2, 0);
 
-    console_win = newwin(CONSOLE_LINES, CONSOLE_WIDTH, FOCUS_LINES + 3, 1);
-    console_box = newwin(CONSOLE_LINES + 2, CONSOLE_WIDTH + 2, FOCUS_LINES + 2, 0);
+    console_win = newwin(CONSOLE_LINES, CONSOLE_WIDTH, FOCUS_LINES + 4, 1);
+    console_box = newwin(CONSOLE_LINES + 2, CONSOLE_WIDTH + 2, FOCUS_LINES + 3, 0);
     console_enabled = true; // Enables console logging
 
     LOG_WARNING("This is a warning!");
@@ -209,6 +217,12 @@ int main()
 
     box(menu_box, 0, 0);
     wrefresh(menu_box);
+
+    // Draw keyboard commands
+    wattron(hint_box, COLOR_PAIR(9));
+    wprintw(hint_box, "                       [A] Add Task [D] Delete [PgUp/PgDwn] Scroll Up/Down                       ");
+    wattroff(hint_box, COLOR_PAIR(9));
+    wrefresh(hint_box);
 
     if (console_enabled)
     {
