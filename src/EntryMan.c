@@ -12,13 +12,12 @@
 #endif
 
 #ifdef _WIN32
-    #pragma message("_WIN32 is defined")
+#pragma message("_WIN32 is defined")
 #else
-    #pragma message("_WIN32 is not defined")
+#pragma message("_WIN32 is not defined")
 #endif
 
 SortParam sort_param;
-
 
 /// @brief Adds a task to the program
 /// @param list List of tasks to append to
@@ -64,7 +63,16 @@ Task *AddTask(DoublyLinkedList *list, sqlite3_int64 id, const char *name, time_t
 void EatSQL(DoublyLinkedList *list, sqlite3 *db)
 {
     sqlite3_stmt *stmt;
-    const char *sql = "SELECT * FROM tasks WHERE completed = 0;";
+    const char *sql;
+    if (SQL_EAT_COMPLETED)
+    {
+        sql = "SELECT * FROM tasks;";
+    }
+    else
+    {
+        sql = "SELECT * FROM tasks WHERE completed = 0;";
+    }
+    
     int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
     if (rc != SQLITE_OK)
     {

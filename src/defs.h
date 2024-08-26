@@ -16,4 +16,6 @@
 
 #define SQL_MESSAGE_SIZE 124 + NAME_SIZE + 23 + 23 + 1 + 1 + DESC_SIZE
 
+#define SQL_EAT_COMPLETED TRUE
+
 #endif
