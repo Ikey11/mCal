@@ -168,19 +168,29 @@ ScreenState TaskScreen(WINDOW *menu_win, sqlite3 *db, DoublyLinkedList *list, No
     case 'd': // Delete
         if (*highlight)
         {
-            // Open data to identify data to remove
             Task *selected_data = (*highlight)->data;
-            LOG_INFO("Deleting %s...", selected_data->name);
-            RemoveEntry(db, selected_data->id);
+            LOG_INFO("Delete %s? (Y/n)", selected_data->name);
+            char confirm = wgetch(menu_win);
 
-            Node *rm = *highlight;
-            if (list->size == 1)
-                *highlight = NULL;
-            else if ((*highlight)->prev == NULL)
-                *highlight = list->tail;
+            if (confirm == 'Y')
+            {
+                // Open data to identify data to remove
+                LOG_INFO("Deleting %s...", selected_data->name);
+                RemoveEntry(db, selected_data->id);
+
+                Node *rm = *highlight;
+                if (list->size == 1)
+                    *highlight = NULL;
+                else if ((*highlight)->prev == NULL)
+                    *highlight = list->tail;
+                else
+                    *highlight = (*highlight)->prev;
+                delete_node(list, rm, free_data);
+            }
             else
-                *highlight = (*highlight)->prev;
-            delete_node(list, rm, free_data);
+            {
+                LOG_INFO("Delete operation cancelled");
+            }
         }
         else
         {
