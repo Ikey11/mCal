@@ -9,6 +9,52 @@ void free_data(void *data)
 
 // ----- Task List -----
 
+/*
+red - past due
+yellow - day of
+magenta - 2 days of
+cyan - 3 days of
+blue - 5 days of
+green - 7 days of
+white - more than a week
+*/
+int DeadLineColor(time_t dueDate)
+{
+    time_t currTime = time(NULL);
+
+    if (currTime > dueDate)
+    {
+        return TEXT_RED;
+    }
+
+    time_t timeLeft = dueDate - currTime;
+
+    if (timeLeft < 86400)
+    {
+        return TEXT_YELLOW;
+    }
+    else if (timeLeft < 172800)
+    {
+        return TEXT_MAGENTA;
+    }
+    else if (timeLeft < 259200)
+    {
+        return TEXT_CYAN;
+    }
+    else if (timeLeft < 432000)
+    {
+        return TEXT_BLUE;
+    }
+    else if (timeLeft < 604800)
+    {
+        return TEXT_GREEN;
+    }
+    else
+    {
+        return TEXT_WHITE;
+    }
+}
+
 void FocusMenu(WINDOW *focus_win, Node *entry)
 {
     if (!entry)
@@ -25,16 +71,23 @@ void FocusMenu(WINDOW *focus_win, Node *entry)
     char date_str[30]; // Buffer for the date string
     struct tm *hardtm;
     hardtm = localtime(&data->date);
+    int hdColor = DeadLineColor(data->date);
     strftime(date_str, 30, "%Y-%m-%d %H:%M", hardtm); // Format as YYYY-MM-DD HH:MM
-    mvwprintw(focus_win, 1, 0, "DLn: %s", date_str);
+    mvwprintw(focus_win, 1, 0, "DLn: ");
+    wattron(focus_win, COLOR_PAIR(hdColor));
+    mvwprintw(focus_win, 1, 5, "%s", date_str);
+    wattroff(focus_win, COLOR_PAIR(hdColor));
 
     if (data->sdate != -1)
     {
         char sdate_str[30]; // Buffer for the date string
         struct tm *softtm;
         softtm = localtime(&data->sdate);
+        int sColor = DeadLineColor(data->sdate);
         strftime(sdate_str, 30, "%Y-%m-%d %H:%M", softtm);
+        wattron(focus_win, COLOR_PAIR(sColor));
         mvwprintw(focus_win, 2, 0, "Aim: %s", sdate_str);
+        wattroff(focus_win, COLOR_PAIR(sColor));
     }
 
     mvwprintw(focus_win, 1, 24, "Prio:");
@@ -96,17 +149,26 @@ void PrintMenu(WINDOW *menu_win, DoublyLinkedList *list, Node *highlight, size_t
 
         char date_str[30]; // Buffer for the date string
         struct tm *tm_info;
+        int dateColor;
         if (data->sdate != -1 && now < data->sdate)
         {
+            dateColor = DeadLineColor(data->sdate);
             tm_info = localtime(&data->sdate);
             strftime(date_str, 30, "%Y-%m-%d %H:%M", tm_info); // Format as YYYY-MM-DD HH:MM
-            mvwprintw(menu_win, y, 38, " Aim: %s", date_str);
+            mvwprintw(menu_win, y, 38, " Aim: ");
+            wattron(menu_win, COLOR_PAIR(dateColor));
+            mvwprintw(menu_win, y, 44, "%s", date_str);
+            wattroff(menu_win, COLOR_PAIR(dateColor));
         }
         else
         {
+            dateColor = DeadLineColor(data->date);
             tm_info = localtime(&data->date);
             strftime(date_str, 30, "%Y-%m-%d %H:%M", tm_info); // Format as YYYY-MM-DD HH:MM
-            mvwprintw(menu_win, y, 38, " DLn: %s", date_str);
+            mvwprintw(menu_win, y, 38, " DLn: ");
+            wattron(menu_win, COLOR_PAIR(dateColor));
+            mvwprintw(menu_win, y, 44, "%s", date_str);
+            wattroff(menu_win, COLOR_PAIR(dateColor));
         }
 
         y += 2;
@@ -169,6 +231,8 @@ ScreenState TaskScreen(WINDOW *menu_win, sqlite3 *db, DoublyLinkedList *list, No
         if (*highlight)
         {
             Task *selected_data = (*highlight)->data;
+
+            // TODO: Proper UI for confirmation prompt
             LOG_INFO("Delete %s? (Y/n)", selected_data->name);
             char confirm = wgetch(menu_win);
 

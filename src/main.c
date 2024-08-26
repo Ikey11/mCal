@@ -155,14 +155,13 @@ int main()
     start_color();
 
     // Initialize color pairs for priorities
-    init_pair(0, COLOR_WHITE, COLOR_BLACK);
-    init_pair(1, COLOR_RED, COLOR_BLACK);
-    init_pair(2, COLOR_GREEN, COLOR_BLACK);
-    init_pair(3, COLOR_YELLOW, COLOR_BLACK);
-    init_pair(4, COLOR_BLUE, COLOR_BLACK);
-    init_pair(5, COLOR_MAGENTA, COLOR_BLACK);
-    init_pair(6, COLOR_CYAN, COLOR_BLACK);
-    init_pair(9, COLOR_BLACK, COLOR_WHITE);
+    init_pair(TEXT_WHITE, COLOR_WHITE, COLOR_BLACK);
+    init_pair(TEXT_RED, COLOR_RED, COLOR_BLACK);
+    init_pair(TEXT_GREEN, COLOR_GREEN, COLOR_BLACK);
+    init_pair(TEXT_YELLOW, COLOR_YELLOW, COLOR_BLACK);
+    init_pair(TEXT_BLUE, COLOR_BLUE, COLOR_BLACK);
+    init_pair(TEXT_MAGENTA, COLOR_MAGENTA, COLOR_BLACK);
+    init_pair(TEXT_CYAN, COLOR_CYAN, COLOR_BLACK);
 
     clear();
     noecho();
@@ -219,9 +218,9 @@ int main()
     wrefresh(menu_box);
 
     // Draw keyboard commands
-    wattron(hint_box, COLOR_PAIR(9));
+    wattron(hint_box, A_REVERSE);
     wprintw(hint_box, "                       [A] Add Task [D] Delete [PgUp/PgDwn] Scroll Up/Down                       ");
-    wattroff(hint_box, COLOR_PAIR(9));
+    wattroff(hint_box, A_REVERSE);
     wrefresh(hint_box);
 
     if (console_enabled)

@@ -21,6 +21,13 @@ typedef enum
 } ScreenState;
 
 // Color table
+#define TEXT_WHITE 0
+#define TEXT_RED 1
+#define TEXT_GREEN 2
+#define TEXT_YELLOW 3
+#define TEXT_BLUE 4
+#define TEXT_MAGENTA 5
+#define TEXT_CYAN 6
 int PriorityColor(int priority);
 
 // Main function to handle smart word wrapping and printing
