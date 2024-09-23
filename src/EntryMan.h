@@ -28,7 +28,7 @@ typedef enum
 
 extern SortParam sort_param;
 
-Task *AddTask(DoublyLinkedList *list, sqlite3_int64 id, const char *name, time_t date, time_t sdate, uint8_t priority, uint8_t status, const char *description);
+Task *AddTask(DoublyLinkedList *list, Task taskValues);
 
 void EatSQL(DoublyLinkedList *list, sqlite3 *db);
 

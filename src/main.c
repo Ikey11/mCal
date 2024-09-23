@@ -2,6 +2,12 @@
 #include "GUITask.h"
 #include "GUIContent.h"
 
+#ifdef _WIN32
+#pragma message("_WIN32 is defined")
+#else
+#pragma message("_WIN32 is not defined")
+#endif
+
 int PriorityColor(int priority)
 {
     // Set color based on priority
@@ -46,13 +52,13 @@ void WordWrap(WINDOW *focus_win, const char *buffer, size_t buffer_size, int y, 
         return;
     }
 
-    size_t w = 0;                  // Word iterator
+    size_t w = 0;                    // Word iterator
     char smartdesc[buffer_size * 2]; // Buffer to hold formatted description
-    size_t smartdesc_pos = 0;      // Current position in smartdesc
-    smartdesc[0] = '\0';           // Initialize smartdesc
+    size_t smartdesc_pos = 0;        // Current position in smartdesc
+    smartdesc[0] = '\0';             // Initialize smartdesc
 
     char descword[buffer_size]; // Buffer to hold current word
-    size_t line_length = 0;   // Current length of the line
+    size_t line_length = 0;     // Current length of the line
 
     for (size_t i = 0; i < buffer_size && buffer[i] != '\0'; i++)
     {
@@ -265,7 +271,14 @@ int main()
             current_screen = TaskScreen(menu_win, db, list, &highlight, n_tasks, &offset);
             break;
         case ADD_TASK_SCREEN:
-            current_screen = AddTaskScreen(menu_win, list, db);
+            Task newTask = {0};
+            newTask.sdate = (time_t)-1;
+            AddTaskScreen(menu_win, &newTask); // Construct a new task based on user input
+            LOG_INFO("Adding task to database...");
+            AddTaskToDatabase(list, db, newTask);
+
+            SortList(&list); // Sort new task
+            current_screen = TASK_SCREEN;
             break;
         case EXIT_APP:
             running = false;

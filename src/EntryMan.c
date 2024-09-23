@@ -11,15 +11,34 @@
 #include "../lib/strptime.h"
 #endif
 
-#ifdef _WIN32
-#pragma message("_WIN32 is defined")
-#else
-#pragma message("_WIN32 is not defined")
-#endif
-
 SortParam sort_param;
 
-/// @brief Adds a task to the program
+/// @brief Adds a task to program's memory
+/// @param list List of tasks to append to
+/// @param id SQL ID
+/// @param newTask Task value
+/// @return 
+Task *AddTask(DoublyLinkedList *list, Task taskValues)
+{
+    // Allocate memory for a new Task
+    Task *task = (Task *)malloc(sizeof(Task));
+    if (task == NULL)
+    {
+        LOG_ERROR("EntryMan::AddTask: Heap is full!");
+        return NULL;
+    }
+
+    // Transfer task contents
+    memcpy(task, &taskValues, sizeof(Task));
+
+    // Insert the new Task into the list
+    insert_front(list, task);
+    LOG_INFO("EntryMan::AddTask: Added %s (%lld)", task->name, task->id);
+    
+    return task;
+}
+
+/// @brief Creates and adds a task to the program's memory
 /// @param list List of tasks to append to
 /// @param date Hard deadline
 /// @param sdate Soft deadline
@@ -27,12 +46,13 @@ SortParam sort_param;
 /// @param status Whether the task is completed (0-1)
 /// @param name Name of task
 /// @return Added task or NULL on memory allocation failure
-Task *AddTask(DoublyLinkedList *list, sqlite3_int64 id, const char *name, time_t date, time_t sdate, uint8_t priority, uint8_t status, const char *description)
+Task *ConstructAndAddTask(DoublyLinkedList *list, sqlite3_int64 id, const char *name, time_t date, time_t sdate, uint8_t priority, uint8_t status, const char *description)
 {
     // Allocate memory for a new Task
     Task *task = (Task *)malloc(sizeof(Task));
     if (task == NULL)
     {
+        LOG_ERROR("EntryMan::AddTask: Heap is full!");
         return NULL;
     }
 
@@ -103,11 +123,11 @@ void EatSQL(DoublyLinkedList *list, sqlite3 *db)
             strptime(softdatetime_str, "%Y-%m-%d %H:%M", &softtm);
             softtm.tm_isdst = -1;
             time_t sdate = mktime(&softtm);
-            AddTask(list, id, name, date, sdate, priority, completed, description);
+            ConstructAndAddTask(list, id, name, date, sdate, priority, completed, description);
         }
         else
         {
-            AddTask(list, id, name, date, -1, priority, completed, description);
+            ConstructAndAddTask(list, id, name, date, -1, priority, completed, description);
         }
     }
 

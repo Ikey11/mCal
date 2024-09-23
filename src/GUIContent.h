@@ -4,6 +4,8 @@
 #include "defs.h"
 #include "main.h"
 
-ScreenState AddTaskScreen(WINDOW *menu_win, DoublyLinkedList *list, sqlite3 *db);
+int AddTaskToDatabase(DoublyLinkedList *list, sqlite3 *db, Task task);
+
+void AddTaskScreen(WINDOW *menu_win, Task *task);
 
 #endif

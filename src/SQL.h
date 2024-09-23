@@ -3,6 +3,8 @@
 
 #include <sqlite3.h>
 
+#include "EntryMan.h"
+
 // Initializes the database and ensures the tasks table exists
 int InitSQL(sqlite3 **db);
 
